@@ -1,4 +1,59 @@
-node_modules
-dist
+# =============================================================================
+# PYTHON / DJANGO
+# =============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+*.whl
+
+# Virtual environment
+backend/venv/
+
+# Environment variables (SECRETS — never commit!)
+backend/.env
+.env
+.env.*
+
+# Database
+*.sqlite3
+db.sqlite3
+
+# Media uploads (user-generated content)
+backend/media/
+
+# Static files (collected)
+backend/staticfiles/
+
+# Django
+*.log
+
+# =============================================================================
+# NODE / FRONTEND
+# =============================================================================
+node_modules/
+dist/
 *.tsbuildinfo
 *.timestamp-*
+
+# =============================================================================
+# IDE / OS
+# =============================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =============================================================================
+# MISC
+# =============================================================================
+*.bak
+*.tmp
