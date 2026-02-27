@@ -132,7 +132,7 @@ GET /api/products/
 
 **Response:** Paginated list with `count`, `next`, `previous`, `results`
 
-Each product includes: `id`, `name`, `slug`, `price`, `discount_price`, `effective_price`, `discount_percentage`, `stock`, `in_stock`, `avg_rating`, `category` (nested), `primary_image`
+Each product includes: `id`, `name`, `slug`, `price`, `discount_price`, `effective_price`, `discount_percentage`, `stock`, `quantity_ml`, `in_stock`, `avg_rating`, `category` (nested), `primary_image`
 
 ### Product Detail
 ```
@@ -319,6 +319,7 @@ Create/Update body:
     "price": "1999.00",
     "discount_price": "1499.00",
     "stock": 50,
+    "quantity_ml": 100,
     "category_id": 1,
     "collection_ids": [1, 2],
     "is_active": true
@@ -427,3 +428,50 @@ Form fields: `image` (file), `alt_text` (string), `is_primary` (true/false)
 | Anonymous | 30 requests/minute |
 | Authenticated | 100 requests/minute |
 | Auth endpoints | 5 requests/minute |
+
+---
+
+## Deploy to Render (Free Tier)
+
+### 1. Create PostgreSQL Database
+- Go to [Render Dashboard](https://dashboard.render.com/) → **New** → **PostgreSQL**
+- Name: `parfum-db`
+- Plan: **Free**
+- Copy the **Internal Database URL** after creation
+
+### 2. Create Web Service
+- **New** → **Web Service** → Connect your GitHub repo
+- **Root Directory**: `backend`
+- **Runtime**: Python
+- **Build Command**: `./build.sh`
+- **Start Command**: `gunicorn parfum.wsgi:application`
+
+### 3. Set Environment Variables
+In the web service settings, add:
+
+| Key | Value |
+|-----|-------|
+| `SECRET_KEY` | Generate one: `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"` |
+| `DEBUG` | `False` |
+| `RENDER` | `True` |
+| `DATABASE_URL` | *(paste Internal Database URL from step 1)* |
+| `ALLOWED_HOSTS` | `your-app-name.onrender.com` |
+| `CORS_ALLOWED_ORIGINS` | `https://your-frontend-url.com` |
+
+### 4. Deploy
+Render will automatically run `build.sh` and start the server.
+
+**Create superuser** via Render Shell tab:
+```bash
+python manage.py createsuperuser
+```
+
+**Seed data** (optional):
+```bash
+python manage.py seed_data
+```
+
+> **Note:** Free tier spins down after 15 min of inactivity. First request after idle takes ~30-50 seconds.
+
+API will be live at: `https://your-app-name.onrender.com/api/`
+

@@ -63,6 +63,10 @@ class Product(models.Model):
         help_text="Leave blank if no discount",
     )
     stock = models.PositiveIntegerField(default=0)
+    quantity_ml = models.PositiveIntegerField(
+        default=100,
+        help_text="Bottle size in millilitres (e.g. 30, 50, 100)",
+    )
     avg_rating = models.DecimalField(
         max_digits=3, decimal_places=2, default=0.00,
     )

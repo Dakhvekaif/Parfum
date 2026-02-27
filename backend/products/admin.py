@@ -14,12 +14,12 @@ class ProductImageInline(admin.TabularInline):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ["name", "category", "price", "discount_price", "stock", "avg_rating", "is_active", "created_at"]
+    list_display = ["name", "category", "price", "discount_price", "stock", "quantity_ml", "avg_rating", "is_active", "created_at"]
     list_filter = ["is_active", "category", "collections", "created_at"]
     search_fields = ["name", "description"]
     prepopulated_fields = {"slug": ("name",)}
     inlines = [ProductImageInline]
-    list_editable = ["price", "discount_price", "stock", "is_active"]
+    list_editable = ["price", "discount_price", "stock", "quantity_ml", "is_active"]
 
 
 @admin.register(Category)

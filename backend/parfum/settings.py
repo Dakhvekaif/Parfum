@@ -1,15 +1,22 @@
 """
 Django settings for Parfum e-commerce backend.
 Production-grade configuration with PostgreSQL, JWT auth, and Argon2 hashing.
+Works locally with .env and on Render with environment variables.
 """
 
 import os
 from datetime import timedelta
 from pathlib import Path
 
+import dj_database_url
 from decouple import Csv, config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# =============================================================================
+# ENVIRONMENT DETECTION
+# =============================================================================
+RENDER = config("RENDER", default=False, cast=bool)
 
 # =============================================================================
 # SECURITY
@@ -17,6 +24,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv())
+
+# On Render, also allow the .onrender.com domain
+if RENDER:
+    ALLOWED_HOSTS.append(".onrender.com")
 
 # =============================================================================
 # APPLICATION DEFINITION
@@ -46,6 +57,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Serve static files in production
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -77,19 +89,23 @@ WSGI_APPLICATION = "parfum.wsgi.application"
 
 # =============================================================================
 # DATABASE — PostgreSQL
+# Uses DATABASE_URL on Render, falls back to individual vars for local dev.
 # =============================================================================
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("DB_NAME", default="parfum_db"),
-        "USER": config("DB_USER", default="postgres"),
-        "PASSWORD": config("DB_PASSWORD"),
-        "HOST": config("DB_HOST", default="localhost"),
-        "PORT": config("DB_PORT", default="5432"),
-        "OPTIONS": {
-            "connect_timeout": 10,
-        },
-    }
+    "default": dj_database_url.config(
+        default=config(
+            "DATABASE_URL",
+            default=(
+                f"postgres://{config('DB_USER', default='postgres')}"
+                f":{config('DB_PASSWORD', default='')}"
+                f"@{config('DB_HOST', default='localhost')}"
+                f":{config('DB_PORT', default='5432')}"
+                f"/{config('DB_NAME', default='parfum_db')}"
+            ),
+        ),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 # =============================================================================
@@ -185,21 +201,30 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# WhiteNoise — compressed, cached static files in production
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # =============================================================================
-# SECURITY HEADERS (production-ready)
+# SECURITY HEADERS
 # =============================================================================
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = "DENY"
 
-# In production, enable these:
-# SECURE_SSL_REDIRECT = True
-# SECURE_HSTS_SECONDS = 31536000
-# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-# SESSION_COOKIE_SECURE = True
-# CSRF_COOKIE_SECURE = True
+# Production-only security (enabled on Render)
+if RENDER:
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

@@ -158,35 +158,35 @@ class Command(BaseCommand):
 
         products_data = [
             # Eau de Parfum
-            {"name": "Swiss Aroma Noir Intense", "description": "A bold, mysterious blend of oud, black amber, and smoky vetiver. This intense fragrance commands attention and leaves a lasting impression.", "price": "2999.00", "discount_price": "2499.00", "stock": 50, "category": "Eau de Parfum", "collections": ["Best Sellers", "Date Night"]},
-            {"name": "Royal Saffron Oud", "description": "An opulent fusion of precious saffron and rare oud wood. Enriched with rose absolute and golden amber for a truly regal experience.", "price": "4999.00", "discount_price": "4299.00", "stock": 30, "category": "Eau de Parfum", "collections": ["Wedding Collection", "Best Sellers"]},
-            {"name": "Midnight Jasmine", "description": "Intoxicating night-blooming jasmine layered with white musk, sandalwood, and a hint of vanilla. Sensual and unforgettable.", "price": "3499.00", "stock": 45, "category": "Eau de Parfum", "collections": ["Date Night", "New Arrivals"]},
-            {"name": "Velvet Rose & Amber", "description": "A romantic blend of Bulgarian rose, warm amber, and soft suede. Elegant and timeless for every occasion.", "price": "3299.00", "discount_price": "2799.00", "stock": 35, "category": "Eau de Parfum", "collections": ["Wedding Collection"]},
-            {"name": "Alpine Fresh Pour Homme", "description": "Crisp mountain air meets bergamot, juniper berries, and cedarwood. A confident, modern masculine fragrance.", "price": "2799.00", "stock": 60, "category": "Eau de Parfum", "collections": ["Office Wear", "Best Sellers"]},
+            {"name": "Swiss Aroma Noir Intense", "description": "A bold, mysterious blend of oud, black amber, and smoky vetiver. This intense fragrance commands attention and leaves a lasting impression.", "price": "2999.00", "discount_price": "2499.00", "stock": 50, "quantity_ml": 100, "category": "Eau de Parfum", "collections": ["Best Sellers", "Date Night"]},
+            {"name": "Royal Saffron Oud", "description": "An opulent fusion of precious saffron and rare oud wood. Enriched with rose absolute and golden amber for a truly regal experience.", "price": "4999.00", "discount_price": "4299.00", "stock": 30, "quantity_ml": 75, "category": "Eau de Parfum", "collections": ["Wedding Collection", "Best Sellers"]},
+            {"name": "Midnight Jasmine", "description": "Intoxicating night-blooming jasmine layered with white musk, sandalwood, and a hint of vanilla. Sensual and unforgettable.", "price": "3499.00", "stock": 45, "quantity_ml": 100, "category": "Eau de Parfum", "collections": ["Date Night", "New Arrivals"]},
+            {"name": "Velvet Rose & Amber", "description": "A romantic blend of Bulgarian rose, warm amber, and soft suede. Elegant and timeless for every occasion.", "price": "3299.00", "discount_price": "2799.00", "stock": 35, "quantity_ml": 50, "category": "Eau de Parfum", "collections": ["Wedding Collection"]},
+            {"name": "Alpine Fresh Pour Homme", "description": "Crisp mountain air meets bergamot, juniper berries, and cedarwood. A confident, modern masculine fragrance.", "price": "2799.00", "stock": 60, "quantity_ml": 100, "category": "Eau de Parfum", "collections": ["Office Wear", "Best Sellers"]},
 
             # Eau de Toilette
-            {"name": "Citrus Burst", "description": "An energizing splash of Italian lemon, grapefruit, and mandarin orange. Light, zesty, and perfect for Indian summers.", "price": "1499.00", "discount_price": "1199.00", "stock": 80, "category": "Eau de Toilette", "collections": ["Summer Essentials"]},
-            {"name": "Ocean Breeze", "description": "Fresh marine notes blended with sea salt, driftwood, and white tea. Like a walk on a pristine Goan beach.", "price": "1699.00", "stock": 70, "category": "Eau de Toilette", "collections": ["Summer Essentials", "New Arrivals"]},
-            {"name": "Green Tea & Bamboo", "description": "A serene, calming fragrance with green tea extract, fresh bamboo, and a touch of white iris.", "price": "1599.00", "discount_price": "1299.00", "stock": 55, "category": "Eau de Toilette", "collections": ["Office Wear"]},
-            {"name": "Lavender Dreams", "description": "French lavender harmonized with tonka bean, coumarin, and creamy musk. Relaxing yet elegant.", "price": "1799.00", "stock": 40, "category": "Eau de Toilette", "collections": ["Office Wear", "New Arrivals"]},
+            {"name": "Citrus Burst", "description": "An energizing splash of Italian lemon, grapefruit, and mandarin orange. Light, zesty, and perfect for Indian summers.", "price": "1499.00", "discount_price": "1199.00", "stock": 80, "quantity_ml": 100, "category": "Eau de Toilette", "collections": ["Summer Essentials"]},
+            {"name": "Ocean Breeze", "description": "Fresh marine notes blended with sea salt, driftwood, and white tea. Like a walk on a pristine Goan beach.", "price": "1699.00", "stock": 70, "quantity_ml": 75, "category": "Eau de Toilette", "collections": ["Summer Essentials", "New Arrivals"]},
+            {"name": "Green Tea & Bamboo", "description": "A serene, calming fragrance with green tea extract, fresh bamboo, and a touch of white iris.", "price": "1599.00", "discount_price": "1299.00", "stock": 55, "quantity_ml": 100, "category": "Eau de Toilette", "collections": ["Office Wear"]},
+            {"name": "Lavender Dreams", "description": "French lavender harmonized with tonka bean, coumarin, and creamy musk. Relaxing yet elegant.", "price": "1799.00", "stock": 40, "quantity_ml": 75, "category": "Eau de Toilette", "collections": ["Office Wear", "New Arrivals"]},
 
             # Body Mist
-            {"name": "Strawberry Kiss", "description": "A playful, fruity mist bursting with ripe strawberries, peach nectar, and cotton candy sweetness.", "price": "699.00", "discount_price": "549.00", "stock": 120, "category": "Body Mist", "collections": ["Summer Essentials", "Best Sellers"]},
-            {"name": "Vanilla Cloud", "description": "Warm Madagascar vanilla wrapped in whipped cream and soft caramel. Cozy, comforting, and addictive.", "price": "749.00", "stock": 100, "category": "Body Mist", "collections": ["Best Sellers"]},
-            {"name": "Tropical Paradise", "description": "Escape to the tropics with coconut water, pineapple, and frangipani flowers. Pure summer in a bottle.", "price": "649.00", "stock": 90, "category": "Body Mist", "collections": ["Summer Essentials"]},
+            {"name": "Strawberry Kiss", "description": "A playful, fruity mist bursting with ripe strawberries, peach nectar, and cotton candy sweetness.", "price": "699.00", "discount_price": "549.00", "stock": 120, "quantity_ml": 200, "category": "Body Mist", "collections": ["Summer Essentials", "Best Sellers"]},
+            {"name": "Vanilla Cloud", "description": "Warm Madagascar vanilla wrapped in whipped cream and soft caramel. Cozy, comforting, and addictive.", "price": "749.00", "stock": 100, "quantity_ml": 150, "category": "Body Mist", "collections": ["Best Sellers"]},
+            {"name": "Tropical Paradise", "description": "Escape to the tropics with coconut water, pineapple, and frangipani flowers. Pure summer in a bottle.", "price": "649.00", "stock": 90, "quantity_ml": 200, "category": "Body Mist", "collections": ["Summer Essentials"]},
 
             # Attar
-            {"name": "Mysore Sandalwood Attar", "description": "Pure, authentic Mysore sandalwood oil. Warm, creamy, and meditative. A timeless Indian classic.", "price": "5999.00", "discount_price": "5499.00", "stock": 20, "category": "Attar", "collections": ["Wedding Collection", "Best Sellers"]},
-            {"name": "Gulab Attar", "description": "Traditional rose attar distilled from thousands of Kannauj rose petals. Rich, deep, and absolutely natural.", "price": "3999.00", "stock": 25, "category": "Attar", "collections": ["Wedding Collection"]},
-            {"name": "Musk Amber Attar", "description": "An exotic blend of white musk and golden amber. Oil-based, alcohol-free, and incredibly long-lasting.", "price": "2999.00", "stock": 30, "category": "Attar", "collections": ["Date Night"]},
+            {"name": "Mysore Sandalwood Attar", "description": "Pure, authentic Mysore sandalwood oil. Warm, creamy, and meditative. A timeless Indian classic.", "price": "5999.00", "discount_price": "5499.00", "stock": 20, "quantity_ml": 12, "category": "Attar", "collections": ["Wedding Collection", "Best Sellers"]},
+            {"name": "Gulab Attar", "description": "Traditional rose attar distilled from thousands of Kannauj rose petals. Rich, deep, and absolutely natural.", "price": "3999.00", "stock": 25, "quantity_ml": 10, "category": "Attar", "collections": ["Wedding Collection"]},
+            {"name": "Musk Amber Attar", "description": "An exotic blend of white musk and golden amber. Oil-based, alcohol-free, and incredibly long-lasting.", "price": "2999.00", "stock": 30, "quantity_ml": 12, "category": "Attar", "collections": ["Date Night"]},
 
             # Cologne
-            {"name": "Classic Vetiver", "description": "Timeless vetiver cologne with hints of lemon and white pepper. The quintessential gentleman's fragrance.", "price": "999.00", "discount_price": "799.00", "stock": 75, "category": "Cologne", "collections": ["Office Wear"]},
-            {"name": "Fresh Aqua Sport", "description": "An invigorating aquatic cologne designed for active lifestyles. Cool, clean, and energizing.", "price": "899.00", "stock": 85, "category": "Cologne", "collections": ["Summer Essentials"]},
+            {"name": "Classic Vetiver", "description": "Timeless vetiver cologne with hints of lemon and white pepper. The quintessential gentleman's fragrance.", "price": "999.00", "discount_price": "799.00", "stock": 75, "quantity_ml": 150, "category": "Cologne", "collections": ["Office Wear"]},
+            {"name": "Fresh Aqua Sport", "description": "An invigorating aquatic cologne designed for active lifestyles. Cool, clean, and energizing.", "price": "899.00", "stock": 85, "quantity_ml": 100, "category": "Cologne", "collections": ["Summer Essentials"]},
 
             # Gift Sets
-            {"name": "The Signature Collection Box", "description": "A luxury gift set featuring 5 of our bestselling miniatures (10ml each) in a premium wooden box. Perfect for gifting.", "price": "4499.00", "discount_price": "3799.00", "stock": 40, "category": "Gift Sets", "collections": ["Best Sellers", "Wedding Collection"]},
-            {"name": "Date Night Duo", "description": "His & Hers fragrance set — Swiss Aroma Noir (50ml) + Midnight Jasmine (50ml) in a romantic gift box.", "price": "5499.00", "discount_price": "4799.00", "stock": 25, "category": "Gift Sets", "collections": ["Date Night", "New Arrivals"]},
+            {"name": "The Signature Collection Box", "description": "A luxury gift set featuring 5 of our bestselling miniatures (10ml each) in a premium wooden box. Perfect for gifting.", "price": "4499.00", "discount_price": "3799.00", "stock": 40, "quantity_ml": 50, "category": "Gift Sets", "collections": ["Best Sellers", "Wedding Collection"]},
+            {"name": "Date Night Duo", "description": "His & Hers fragrance set — Swiss Aroma Noir (50ml) + Midnight Jasmine (50ml) in a romantic gift box.", "price": "5499.00", "discount_price": "4799.00", "stock": 25, "quantity_ml": 100, "category": "Gift Sets", "collections": ["Date Night", "New Arrivals"]},
         ]
 
         # Map category names to objects
@@ -205,6 +205,7 @@ class Command(BaseCommand):
                     "price": Decimal(data["price"]),
                     "discount_price": Decimal(data["discount_price"]) if data.get("discount_price") else None,
                     "stock": data["stock"],
+                    "quantity_ml": data.get("quantity_ml", 100),
                     "category": cat_map[category_name],
                     "is_active": True,
                 },
