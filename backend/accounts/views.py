@@ -1,18 +1,21 @@
 """
-Auth views: register, login (JWT), profile, change password.
+Auth views: register, login (JWT), profile, change password, admin customer list.
 """
 
 from django.contrib.auth import authenticate, get_user_model
-from rest_framework import generics, status
+from django.db.models import Count, Max, Sum
+from rest_framework import filters, generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from parfum.permissions import IsAdmin
 from parfum.throttles import AuthRateThrottle
 
 from .serializers import (
     ChangePasswordSerializer,
+    CustomerSerializer,
     LoginSerializer,
     RegisterSerializer,
     UserSerializer,
@@ -138,3 +141,22 @@ class ChangePasswordView(APIView):
         request.user.set_password(serializer.validated_data["new_password"])
         request.user.save()
         return Response({"message": "Password changed successfully."})
+
+
+class AdminCustomerListView(generics.ListAPIView):
+    """GET /api/admin/customers/ — List all customers with order stats."""
+
+    serializer_class = CustomerSerializer
+    permission_classes = [IsAuthenticated, IsAdmin]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["first_name", "last_name", "email", "phone", "city"]
+    ordering_fields = ["date_joined", "first_name", "orders_count", "total_spent"]
+    ordering = ["-date_joined"]
+
+    def get_queryset(self):
+        return User.objects.filter(role="customer").annotate(
+            orders_count=Count("orders"),
+            total_spent=Sum("orders__total_amount"),
+            last_order_date=Max("orders__created_at"),
+        )
+

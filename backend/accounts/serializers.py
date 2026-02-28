@@ -70,3 +70,20 @@ class ChangePasswordSerializer(serializers.Serializer):
         if not user.check_password(value):
             raise serializers.ValidationError("Current password is incorrect.")
         return value
+
+
+class CustomerSerializer(serializers.ModelSerializer):
+    """Admin-facing customer serializer with order stats."""
+
+    orders_count = serializers.IntegerField(read_only=True)
+    total_spent = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    last_order_date = serializers.DateTimeField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            "id", "first_name", "last_name", "email", "phone", "city",
+            "date_joined", "orders_count", "total_spent", "last_order_date",
+            "is_active",
+        ]
+
