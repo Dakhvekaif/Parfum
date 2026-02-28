@@ -113,6 +113,23 @@ class AdminProductViewSet(viewsets.ModelViewSet):
             return ProductDetailSerializer
         return ProductListSerializer
 
+    def destroy(self, request, *args, **kwargs):
+        product = self.get_object()
+        try:
+            # Clean up related objects that allow deletion
+            product.cart_items.all().delete()
+            product.wishlisted_by.all().delete()
+            product.reviews.all().delete()
+            product.inventory_transfers.all().delete()
+            product.images.all().delete()
+            product.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Exception:
+            return Response(
+                {"error": "Cannot delete this product — it has existing orders. Deactivate it instead."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
 
 class AdminCategoryViewSet(viewsets.ModelViewSet):
     """CRUD /api/admin/categories/ — Admin category management."""
@@ -152,7 +169,17 @@ class ProductImageUploadView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        is_primary = request.data.get("is_primary", "false").lower() == "true"
+        # Handle is_primary as both string ("true") and boolean (true)
+        is_primary_raw = request.data.get("is_primary", False)
+        if isinstance(is_primary_raw, str):
+            is_primary = is_primary_raw.lower() == "true"
+        else:
+            is_primary = bool(is_primary_raw)
+
+        # Auto-set first image as primary if product has no images yet
+        if not product.images.exists():
+            is_primary = True
+
         alt_text = request.data.get("alt_text", "")
 
         product_image = ProductImage.objects.create(
