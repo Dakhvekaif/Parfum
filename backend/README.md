@@ -9,7 +9,9 @@ Django REST Framework backend for the Parfum e-commerce platform.
 - **JWT Authentication** (SimpleJWT)
 - **Argon2** password hashing
 
-## Quick Setup
+---
+
+## Quick Setup (Local)
 
 ```bash
 cd backend
@@ -32,15 +34,26 @@ python manage.py seed_data      # Populate with sample data
 python manage.py runserver
 ```
 
-API available at `http://127.0.0.1:8000/api/`
+API available at: **`http://127.0.0.1:8000/api/`**
+
+> **For the deployed version:** `https://parfum-api.onrender.com/api/`
 
 ---
 
-## Authentication
+## How Auth Works
 
-All protected endpoints use **Bearer Token** authentication.
+All protected endpoints need a **Bearer Token** in the header:
+```
+Authorization: Bearer <your_access_token>
+```
 
-### Register
+You get tokens by **registering** or **logging in**. Access tokens expire in 1 day. Use the refresh token to get a new one.
+
+---
+
+## 🔓 Authentication Endpoints
+
+### Register a New Account
 ```
 POST /api/auth/register/
 ```
@@ -54,7 +67,7 @@ POST /api/auth/register/
     "password_confirm": "SecurePass123!"
 }
 ```
-**Response:** `201` — returns `user` object + `tokens` (`access`, `refresh`)
+✅ Returns: `user` object + `tokens` (access + refresh)
 
 ### Login
 ```
@@ -63,33 +76,33 @@ POST /api/auth/login/
 ```json
 { "email": "user@example.com", "password": "SecurePass123!" }
 ```
-**Response:** `200` — returns `user` + `tokens`
+✅ Returns: `user` object + `tokens`
 
 ### Logout
 ```
 POST /api/auth/logout/
-Authorization: Bearer <access_token>
+Authorization: Bearer <token>
 ```
 ```json
 { "refresh": "<refresh_token>" }
 ```
 
-### Refresh Token
+### Refresh Token (when access token expires)
 ```
 POST /api/auth/token/refresh/
 ```
 ```json
 { "refresh": "<refresh_token>" }
 ```
-**Response:** `200` — new `access` token
+✅ Returns: new `access` token
 
-### Profile (GET / PUT)
+### Get / Update Profile
 ```
-GET  /api/auth/profile/
-PUT  /api/auth/profile/
-Authorization: Bearer <access_token>
+GET  /api/auth/profile/          # View your profile
+PUT  /api/auth/profile/          # Update your profile
+Authorization: Bearer <token>
 ```
-PUT body (all optional):
+Update body (all fields optional):
 ```json
 {
     "first_name": "John",
@@ -104,7 +117,7 @@ PUT body (all optional):
 ### Change Password
 ```
 POST /api/auth/change-password/
-Authorization: Bearer <access_token>
+Authorization: Bearer <token>
 ```
 ```json
 { "old_password": "OldPass123!", "new_password": "NewPass456!" }
@@ -112,33 +125,50 @@ Authorization: Bearer <access_token>
 
 ---
 
-## Products (Public — No Auth Required)
+## 🛍️ Products (Public — No Auth Needed)
 
-### List Products
+### List All Products
 ```
 GET /api/products/
 ```
-**Query Parameters:**
 
-| Param | Example | Description |
+**Filters you can use:**
+
+| Param | Example | What it does |
 |-------|---------|-------------|
 | `search` | `?search=jasmine` | Search name & description |
 | `category__slug` | `?category__slug=attar` | Filter by category |
-| `collection` | `?collection=best-sellers` | Filter by collection slug |
+| `collection` | `?collection=best-sellers` | Filter by collection |
 | `min_price` | `?min_price=1000` | Minimum price |
 | `max_price` | `?max_price=5000` | Maximum price |
-| `ordering` | `?ordering=price` | Sort by: `price`, `-price`, `name`, `-created_at`, `avg_rating` |
+| `ordering` | `?ordering=-price` | Sort: `price`, `-price`, `name`, `-created_at`, `avg_rating` |
 | `page` | `?page=2` | Pagination (20 per page) |
 
-**Response:** Paginated list with `count`, `next`, `previous`, `results`
-
-Each product includes: `id`, `name`, `slug`, `price`, `discount_price`, `effective_price`, `discount_percentage`, `stock`, `quantity_ml`, `in_stock`, `avg_rating`, `category` (nested), `primary_image`
+**Each product returns:**
+```json
+{
+    "id": 1,
+    "name": "Swiss Aroma Noir",
+    "slug": "swiss-aroma-noir",
+    "price": "2999.00",
+    "discount_price": "2499.00",
+    "effective_price": "2499.00",
+    "discount_percentage": 17,
+    "stock": 50,
+    "quantity_ml": 100,
+    "in_stock": true,
+    "avg_rating": "4.50",
+    "category": { "id": 1, "name": "Eau de Parfum", "slug": "eau-de-parfum" },
+    "primary_image": "https://...",
+    "created_at": "2026-01-15T10:00:00Z"
+}
+```
 
 ### Product Detail
 ```
 GET /api/products/{slug}/
 ```
-Returns full product with `images[]`, `collections[]`, `description`
+Returns full product with `images[]`, `collections[]`, `description`, `quantity_ml`
 
 ### Categories
 ```
@@ -160,13 +190,13 @@ Returns approved reviews for a product
 
 ---
 
-## Cart (Auth Required)
+## 🛒 Cart (Auth Required)
 
 ### View Cart
 ```
 GET /api/cart/
 ```
-**Response:** `items[]` with product details, `total_items`, `total_price`
+Returns: `items[]` with product details, `total_items`, `total_price`
 
 ### Add to Cart
 ```
@@ -175,7 +205,7 @@ POST /api/cart/add/
 ```json
 { "product_id": 1, "quantity": 1 }
 ```
-Adds product or increments quantity if already in cart.
+> If product is already in cart, quantity gets incremented.
 
 ### Update Quantity
 ```
@@ -184,40 +214,40 @@ PUT /api/cart/update/{item_id}/
 ```json
 { "quantity": 3 }
 ```
-`item_id` = the cart item ID (from cart response), not product ID.
+> ⚠️ `item_id` = the **cart item ID** from the cart response, NOT the product ID!
 
 ### Remove Item
 ```
 DELETE /api/cart/remove/{item_id}/
 ```
 
-### Clear Cart
+### Clear Entire Cart
 ```
 DELETE /api/cart/clear/
 ```
 
 ---
 
-## Wishlist (Auth Required)
+## ❤️ Wishlist (Auth Required)
 
 ### View Wishlist
 ```
 GET /api/wishlist/
 ```
 
-### Toggle (Add/Remove)
+### Toggle Add / Remove
 ```
 POST /api/wishlist/toggle/
 ```
 ```json
 { "product_id": 1 }
 ```
-- First call → adds to wishlist (`201`)
-- Second call → removes from wishlist (`200`)
+- First call → **adds** to wishlist (`201`)
+- Second call → **removes** from wishlist (`200`)
 
 ---
 
-## Discounts (Auth Required)
+## 🏷️ Discounts (Auth Required)
 
 ### Apply / Validate Coupon
 ```
@@ -226,13 +256,13 @@ POST /api/discounts/apply/
 ```json
 { "code": "WELCOME10" }
 ```
-**Response:** `discount_amount`, `cart_total`, `new_total`
+✅ Returns: `discount_amount`, `cart_total`, `new_total`
 
-> Validates against current cart total. Cart must meet minimum order amount.
+> Cart must meet the coupon's minimum order amount.
 
 ---
 
-## Orders (Auth Required)
+## 📦 Orders (Auth Required)
 
 ### Checkout
 ```
@@ -249,9 +279,9 @@ POST /api/orders/checkout/
     "discount_code": "WELCOME10"
 }
 ```
-`payment_method` options: `upi`, `card`, `cod`, `wallet`, `netbanking`
-
-`discount_code` is optional. Cart is cleared after successful checkout.
+- `payment_method`: `upi`, `card`, `cod`, `wallet`, `netbanking`
+- `discount_code`: optional
+- Cart is cleared after successful checkout
 
 ### My Orders
 ```
@@ -262,7 +292,7 @@ GET /api/orders/
 ```
 GET /api/orders/{id}/
 ```
-Includes `items[]` and `payment` info.
+Includes `items[]` and `payment` info
 
 ### Record Payment
 ```
@@ -274,22 +304,24 @@ POST /api/orders/{order_id}/payment/
 
 ---
 
-## Reviews (Auth Required)
+## ⭐ Reviews (Auth Required)
 
-### Submit Review
+### Submit a Review
 ```
 POST /api/reviews/
 ```
 ```json
 { "product": 1, "rating": 5, "comment": "Amazing fragrance!" }
 ```
-Rating: 1–5. One review per user per product. Pending admin approval.
+- Rating: **1–5**
+- One review per user per product
+- Reviews need admin approval before showing publicly
 
 ---
 
-## Admin Endpoints (Admin Auth Required)
+## 🔐 Admin Endpoints (Admin Only)
 
-All admin endpoints require a user with `role = "admin"` or `is_superuser = True`.
+> All admin endpoints require a JWT from a user with `role = "admin"` or `is_superuser = True`.
 
 ### Dashboard Stats
 ```
@@ -303,7 +335,40 @@ GET /api/admin/analytics/sales/
 GET /api/admin/analytics/sales/?start_date=2026-01-01&end_date=2026-02-28
 ```
 
-### Products CRUD
+---
+
+### 👥 Customers List
+```
+GET /api/admin/customers/
+```
+
+**Filters:**
+
+| Param | Example | What it does |
+|-------|---------|-------------|
+| `search` | `?search=john` | Search by name, email, phone, city |
+| `ordering` | `?ordering=-total_spent` | Sort: `date_joined`, `first_name`, `orders_count`, `total_spent` |
+
+**Each customer returns:**
+```json
+{
+    "id": 1,
+    "first_name": "John",
+    "last_name": "Doe",
+    "email": "john@example.com",
+    "phone": "9876543210",
+    "city": "Mumbai",
+    "date_joined": "2026-01-15T00:00:00Z",
+    "orders_count": 3,
+    "total_spent": "4500.00",
+    "last_order_date": "2026-03-10T12:30:00Z",
+    "is_active": true
+}
+```
+
+---
+
+### 📦 Products CRUD
 ```
 GET    /api/admin/products/              # List all
 POST   /api/admin/products/              # Create
@@ -311,7 +376,8 @@ GET    /api/admin/products/{id}/         # Detail
 PATCH  /api/admin/products/{id}/         # Update
 DELETE /api/admin/products/{id}/         # Delete
 ```
-Create/Update body:
+
+Create / Update body:
 ```json
 {
     "name": "New Perfume",
@@ -326,7 +392,21 @@ Create/Update body:
 }
 ```
 
-### Categories CRUD
+> ⚠️ **Delete note:** If the product has existing orders, it **can't** be deleted (returns 400). Deactivate it instead by setting `"is_active": false`.
+
+### 🖼️ Product Image Upload
+```
+POST   /api/admin/products/{product_id}/images/       # Upload image
+DELETE /api/admin/products/{product_id}/images/?image_id=1   # Delete image
+```
+**Upload as `multipart/form-data`**, NOT JSON:
+- `image`: the image file
+- `alt_text`: description (string, optional)
+- `is_primary`: `true` or `false` (optional — first image is auto-set as primary)
+
+---
+
+### 📁 Categories CRUD
 ```
 GET    /api/admin/categories/
 POST   /api/admin/categories/
@@ -337,7 +417,7 @@ DELETE /api/admin/categories/{id}/
 { "name": "Deodorants", "description": "Long-lasting sprays" }
 ```
 
-### Collections CRUD
+### 📁 Collections CRUD
 ```
 GET    /api/admin/collections/
 POST   /api/admin/collections/
@@ -348,7 +428,9 @@ DELETE /api/admin/collections/{id}/
 { "name": "Monsoon Specials", "description": "Fresh scents", "is_active": true }
 ```
 
-### Orders Management
+---
+
+### 📋 Orders Management
 ```
 GET /api/admin/orders/                   # All orders
 PUT /api/admin/orders/{id}/status/       # Update status
@@ -358,17 +440,17 @@ PUT /api/admin/orders/{id}/status/       # Update status
 ```
 Status options: `pending`, `confirmed`, `processing`, `shipped`, `delivered`, `cancelled`, `refunded`
 
-### Reviews Management
+### ✅ Reviews Management
 ```
 GET /api/admin/reviews/                  # All reviews
 GET /api/admin/reviews/?approved=false   # Pending only
-PUT /api/admin/reviews/{id}/approve/     # Approve/reject
+PUT /api/admin/reviews/{id}/approve/     # Approve or reject
 ```
 ```json
-{ "approve": true }    // or false to delete
+{ "approve": true }
 ```
 
-### Discounts CRUD
+### 🏷️ Discounts CRUD
 ```
 GET    /api/admin/discounts/
 POST   /api/admin/discounts/
@@ -391,10 +473,10 @@ DELETE /api/admin/discounts/{id}/
 ```
 `discount_type`: `percentage` or `fixed`
 
-### Inventory Transfers
+### 📊 Inventory Transfers
 ```
 POST /api/admin/inventory/transfer/      # Record stock in/out
-GET  /api/admin/inventory/transfers/     # History
+GET  /api/admin/inventory/transfers/     # Transfer history
 GET  /api/admin/inventory/transfers/?product_id=1
 ```
 ```json
@@ -402,76 +484,64 @@ GET  /api/admin/inventory/transfers/?product_id=1
 ```
 `transfer_type`: `in` or `out`
 
-### Product Image Upload
-```
-POST   /api/admin/products/{product_id}/images/    # Upload (multipart/form-data)
-DELETE /api/admin/products/{product_id}/images/?image_id=1
-```
-Form fields: `image` (file), `alt_text` (string), `is_primary` (true/false)
+---
+
+## ⚠️ Error Codes
+
+| Code | What it means |
+|------|--------------|
+| `400` | Bad request — check your JSON body |
+| `401` | Not logged in or token expired — login again |
+| `403` | You don't have permission (not admin) |
+| `404` | Not found |
+| `429` | Too many requests — slow down |
+
+## ⏱️ Rate Limits
+
+| Who | Limit |
+|-----|-------|
+| Not logged in | 30 requests/minute |
+| Logged in | 100 requests/minute |
+| Auth endpoints (login/register) | 5 requests/minute |
 
 ---
 
-## Error Responses
-
-| Code | Meaning |
-|------|---------|
-| `400` | Validation error — check request body |
-| `401` | Token missing/invalid/expired — login again |
-| `403` | Not authorized (wrong role) |
-| `404` | Resource not found |
-| `429` | Rate limited — wait and retry |
-
-## Rate Limits
-
-| User Type | Limit |
-|-----------|-------|
-| Anonymous | 30 requests/minute |
-| Authenticated | 100 requests/minute |
-| Auth endpoints | 5 requests/minute |
-
----
-
-## Deploy to Render (Free Tier)
+## 🚀 Deploy to Render (Free Tier)
 
 ### 1. Create PostgreSQL Database
-- Go to [Render Dashboard](https://dashboard.render.com/) → **New** → **PostgreSQL**
-- Name: `parfum-db`
-- Plan: **Free**
-- Copy the **Internal Database URL** after creation
+- [Render Dashboard](https://dashboard.render.com/) → **New +** → **PostgreSQL**
+- Name: `parfum-db` → Plan: **Free** → Create
+- Copy the **Internal Database URL**
 
 ### 2. Create Web Service
-- **New** → **Web Service** → Connect your GitHub repo
+- **New +** → **Web Service** → Connect GitHub repo (`Dakhvekaif/Parfum`)
 - **Root Directory**: `backend`
 - **Runtime**: Python
 - **Build Command**: `./build.sh`
 - **Start Command**: `gunicorn parfum.wsgi:application`
+- **Plan**: Free
 
 ### 3. Set Environment Variables
-In the web service settings, add:
 
 | Key | Value |
 |-----|-------|
-| `SECRET_KEY` | Generate one: `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"` |
+| `SECRET_KEY` | *(generate a random one)* |
 | `DEBUG` | `False` |
 | `RENDER` | `True` |
-| `DATABASE_URL` | *(paste Internal Database URL from step 1)* |
-| `ALLOWED_HOSTS` | `your-app-name.onrender.com` |
-| `CORS_ALLOWED_ORIGINS` | `https://your-frontend-url.com` |
+| `DATABASE_URL` | *(Internal Database URL from step 1)* |
+| `ALLOWED_HOSTS` | `parfum-api.onrender.com` |
+| `DJANGO_SUPERUSER_EMAIL` | `admin@parfum.com` |
+| `DJANGO_SUPERUSER_PASSWORD` | *(your admin password)* |
+| `PYTHON_VERSION` | `3.13.2` |
 
 ### 4. Deploy
-Render will automatically run `build.sh` and start the server.
+Click **Create Web Service**. Render auto-runs `build.sh` which:
+- Installs dependencies
+- Collects static files
+- Runs migrations
+- Creates the superuser
+- Seeds sample data
 
-**Create superuser** via Render Shell tab:
-```bash
-python manage.py createsuperuser
-```
+> ⏳ Free tier sleeps after 15 min idle. First request after sleep takes ~30-50 seconds.
 
-**Seed data** (optional):
-```bash
-python manage.py seed_data
-```
-
-> **Note:** Free tier spins down after 15 min of inactivity. First request after idle takes ~30-50 seconds.
-
-API will be live at: `https://your-app-name.onrender.com/api/`
-
+**API will be live at:** `https://parfum-api.onrender.com/api/`
