@@ -63,8 +63,7 @@ POST /api/auth/register/
     "first_name": "John",
     "last_name": "Doe",
     "phone": "9876543210",
-    "password": "SecurePass123!",
-    "password_confirm": "SecurePass123!"
+    "password": "SecurePass123!"
 }
 ```
 ✅ Returns: `user` object + `tokens` (access + refresh)
