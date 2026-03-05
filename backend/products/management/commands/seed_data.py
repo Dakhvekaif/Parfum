@@ -1,18 +1,93 @@
 """
 Management command to populate the database with realistic perfume seed data.
+Downloads product images from Unsplash so they persist across Render deploys.
+
 Usage: python manage.py seed_data
        python manage.py seed_data --clear   (wipes existing data first)
 """
 
 import random
+import urllib.request
 from datetime import timedelta
 from decimal import Decimal
+from io import BytesIO
+from pathlib import Path
 
 from django.contrib.auth import get_user_model
+from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 User = get_user_model()
+
+# ──────────────────────────────────────────────────
+# UNSPLASH IMAGE URLS (free, permanent, high quality)
+# Each product gets 2-3 unique images.
+# Format: {product_name: [url1, url2, ...]}
+# ──────────────────────────────────────────────────
+PRODUCT_IMAGES = {
+    # ── Men's Fragrances ──
+    "Alpine Noir EDP": [
+        "https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=800&q=80",
+        "https://images.unsplash.com/photo-1594035910387-fbd1a485b12e?w=800&q=80",
+        "https://images.unsplash.com/photo-1547887538-e3a2f32cb1cc?w=800&q=80",
+    ],
+    "Swiss Cedar & Vetiver": [
+        "https://images.unsplash.com/photo-1587017539504-67cfbddac569?w=800&q=80",
+        "https://images.unsplash.com/photo-1590736704728-f4730bb30770?w=800&q=80",
+        "https://images.unsplash.com/photo-1595535373192-fc8935bacd89?w=800&q=80",
+    ],
+    "Dark Oud Elixir": [
+        "https://images.unsplash.com/photo-1541643600914-78b084683601?w=800&q=80",
+        "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=800&q=80",
+        "https://images.unsplash.com/photo-1619994403073-2cec844b8c63?w=800&q=80",
+    ],
+    "Aqua Sport Fresh": [
+        "https://images.unsplash.com/photo-1557170334-a9632e77c6e4?w=800&q=80",
+        "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=800&q=80",
+    ],
+
+    # ── Women's Fragrances ──
+    "Midnight Rose Parfum": [
+        "https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?w=800&q=80",
+        "https://images.unsplash.com/photo-1563170351-be82bc888aa4?w=800&q=80",
+        "https://images.unsplash.com/photo-1596516109370-29001ec8ec36?w=800&q=80",
+    ],
+    "Jasmine & White Tea": [
+        "https://images.unsplash.com/photo-1588514727390-91fd2eab064a?w=800&q=80",
+        "https://images.unsplash.com/photo-1615634260167-c8cdede054de?w=800&q=80",
+        "https://images.unsplash.com/photo-1608528577891-eb055944f2e7?w=800&q=80",
+    ],
+    "Velvet Orchid Luxe": [
+        "https://images.unsplash.com/photo-1592842232655-e5d345cbc2d0?w=800&q=80",
+        "https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=800&q=80",
+    ],
+    "Cherry Blossom Mist": [
+        "https://images.unsplash.com/photo-1616949755610-8c9c3148e13e?w=800&q=80",
+        "https://images.unsplash.com/photo-1617897903246-719242758050?w=800&q=80",
+        "https://images.unsplash.com/photo-1616093875689-e1227f031c2c?w=800&q=80",
+    ],
+
+    # ── Unisex Fragrances ──
+    "Mysore Sandalwood Attar": [
+        "https://images.unsplash.com/photo-1595425964272-fc617fa31e37?w=800&q=80",
+        "https://images.unsplash.com/photo-1602928298849-325cec8771c0?w=800&q=80",
+        "https://images.unsplash.com/photo-1600612253971-422b1a834cbb?w=800&q=80",
+    ],
+    "Saffron & Amber Fusion": [
+        "https://images.unsplash.com/photo-1610462275440-4ea0976f46f2?w=800&q=80",
+        "https://images.unsplash.com/photo-1605278864684-a41d5d06e149?w=800&q=80",
+    ],
+    "Citrus Bergamot Fresh": [
+        "https://images.unsplash.com/photo-1594035910387-fbd1a485b12e?w=800&q=80",
+        "https://images.unsplash.com/photo-1528740561666-dc2479dc08ab?w=800&q=80",
+        "https://images.unsplash.com/photo-1583445013765-74bcd5b30d37?w=800&q=80",
+    ],
+    "Musk & Vanilla Unisex": [
+        "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&q=80",
+        "https://images.unsplash.com/photo-1612198188571-1b507cee5dab?w=800&q=80",
+    ],
+}
 
 
 class Command(BaseCommand):
@@ -35,6 +110,7 @@ class Command(BaseCommand):
         categories = self._create_categories()
         collections = self._create_collections()
         products = self._create_products(categories, collections)
+        self._create_product_images(products)
         self._create_discounts()
         self._create_orders(users, products)
         self._create_reviews(users, products)
@@ -101,19 +177,16 @@ class Command(BaseCommand):
         return users
 
     # ------------------------------------------------------------------
-    # CATEGORIES
+    # CATEGORIES (Men, Women, Unisex)
     # ------------------------------------------------------------------
     def _create_categories(self):
         from products.models import Category
 
         self.stdout.write("[CATEGORIES] Creating categories...")
         categories_data = [
-            {"name": "Eau de Parfum", "description": "Long-lasting fragrances with 15-20% concentration. Perfect for all-day wear."},
-            {"name": "Eau de Toilette", "description": "Light, refreshing scents with 5-15% concentration. Ideal for daily use."},
-            {"name": "Body Mist", "description": "Ultra-light fragrance sprays for a subtle, refreshing scent throughout the day."},
-            {"name": "Attar", "description": "Traditional oil-based perfumes, alcohol-free with rich, concentrated fragrance."},
-            {"name": "Cologne", "description": "Classic light fragrances with 2-4% concentration. Fresh and invigorating."},
-            {"name": "Gift Sets", "description": "Curated perfume gift boxes perfect for special occasions and celebrations."},
+            {"name": "Men", "description": "Bold, confident fragrances crafted for the modern man. From fresh aquatics to deep ouds."},
+            {"name": "Women", "description": "Elegant, captivating scents designed for her. Florals, orientals, and everything in between."},
+            {"name": "Unisex", "description": "Versatile fragrances that transcend gender. Perfect for anyone who loves great perfume."},
         ]
 
         categories = []
@@ -132,12 +205,12 @@ class Command(BaseCommand):
 
         self.stdout.write("[COLLECTIONS] Creating collections...")
         collections_data = [
-            {"name": "Summer Essentials", "description": "Light, citrusy fragrances perfect for hot Indian summers."},
+            {"name": "Indian Products", "description": "Authentic Indian fragrances — attars, sandalwood, and traditional scents rooted in centuries of perfumery."},
+            {"name": "Swiss Products", "description": "Premium Swiss-crafted fragrances with Alpine-inspired ingredients and European sophistication."},
+            {"name": "New Arrivals", "description": "The latest additions to our fragrance family. Fresh drops you don't want to miss."},
             {"name": "Best Sellers", "description": "Our most popular perfumes loved by thousands of customers."},
+            {"name": "Summer Essentials", "description": "Light, citrusy fragrances perfect for hot Indian summers."},
             {"name": "Wedding Collection", "description": "Luxurious fragrances crafted for the most special day of your life."},
-            {"name": "Office Wear", "description": "Subtle, sophisticated scents appropriate for professional settings."},
-            {"name": "Date Night", "description": "Alluring, magnetic fragrances for romantic evenings."},
-            {"name": "New Arrivals", "description": "The latest additions to our fragrance family."},
         ]
 
         collections = []
@@ -149,7 +222,7 @@ class Command(BaseCommand):
         return collections
 
     # ------------------------------------------------------------------
-    # PRODUCTS
+    # PRODUCTS (3-4 per category = 12 total)
     # ------------------------------------------------------------------
     def _create_products(self, categories, collections):
         from products.models import Product
@@ -157,45 +230,116 @@ class Command(BaseCommand):
         self.stdout.write("[PRODUCTS] Creating products...")
 
         products_data = [
-            # Eau de Parfum
-            {"name": "Swiss Aroma Noir Intense", "description": "A bold, mysterious blend of oud, black amber, and smoky vetiver. This intense fragrance commands attention and leaves a lasting impression.", "price": "2999.00", "discount_price": "2499.00", "stock": 50, "quantity_ml": 100, "category": "Eau de Parfum", "collections": ["Best Sellers", "Date Night"]},
-            {"name": "Royal Saffron Oud", "description": "An opulent fusion of precious saffron and rare oud wood. Enriched with rose absolute and golden amber for a truly regal experience.", "price": "4999.00", "discount_price": "4299.00", "stock": 30, "quantity_ml": 75, "category": "Eau de Parfum", "collections": ["Wedding Collection", "Best Sellers"]},
-            {"name": "Midnight Jasmine", "description": "Intoxicating night-blooming jasmine layered with white musk, sandalwood, and a hint of vanilla. Sensual and unforgettable.", "price": "3499.00", "stock": 45, "quantity_ml": 100, "category": "Eau de Parfum", "collections": ["Date Night", "New Arrivals"]},
-            {"name": "Velvet Rose & Amber", "description": "A romantic blend of Bulgarian rose, warm amber, and soft suede. Elegant and timeless for every occasion.", "price": "3299.00", "discount_price": "2799.00", "stock": 35, "quantity_ml": 50, "category": "Eau de Parfum", "collections": ["Wedding Collection"]},
-            {"name": "Alpine Fresh Pour Homme", "description": "Crisp mountain air meets bergamot, juniper berries, and cedarwood. A confident, modern masculine fragrance.", "price": "2799.00", "stock": 60, "quantity_ml": 100, "category": "Eau de Parfum", "collections": ["Office Wear", "Best Sellers"]},
+            # ── Men (4 products) ──
+            {
+                "name": "Alpine Noir EDP",
+                "description": "A bold, mysterious blend of Swiss pine, black amber, and smoky vetiver. This intense Eau de Parfum is crafted in the Swiss tradition and commands attention with every step. Long-lasting 8-10 hour performance.",
+                "price": "3499.00", "discount_price": "2999.00",
+                "stock": 50, "quantity_ml": 100,
+                "category": "Men",
+                "collections": ["Swiss Products", "Best Sellers"],
+            },
+            {
+                "name": "Swiss Cedar & Vetiver",
+                "description": "Crisp Alpine cedarwood meets earthy vetiver in this sophisticated gentleman's fragrance. Notes of bergamot and white pepper add a modern edge. Perfect for the office or evening events.",
+                "price": "2999.00",
+                "stock": 60, "quantity_ml": 75,
+                "category": "Men",
+                "collections": ["Swiss Products", "New Arrivals"],
+            },
+            {
+                "name": "Dark Oud Elixir",
+                "description": "A rich, opulent blend of aged Indian oud, saffron threads, and golden amber. This premium attar-inspired EDP bridges Eastern tradition with modern perfumery. Incredibly long-lasting.",
+                "price": "4999.00", "discount_price": "4499.00",
+                "stock": 25, "quantity_ml": 50,
+                "category": "Men",
+                "collections": ["Indian Products", "Wedding Collection"],
+            },
+            {
+                "name": "Aqua Sport Fresh",
+                "description": "An invigorating aquatic cologne with sea salt, cucumber, and driftwood. Clean, energising, and designed for active lifestyles. Light enough for Indian summers.",
+                "price": "1499.00", "discount_price": "1199.00",
+                "stock": 80, "quantity_ml": 150,
+                "category": "Men",
+                "collections": ["Summer Essentials", "New Arrivals"],
+            },
 
-            # Eau de Toilette
-            {"name": "Citrus Burst", "description": "An energizing splash of Italian lemon, grapefruit, and mandarin orange. Light, zesty, and perfect for Indian summers.", "price": "1499.00", "discount_price": "1199.00", "stock": 80, "quantity_ml": 100, "category": "Eau de Toilette", "collections": ["Summer Essentials"]},
-            {"name": "Ocean Breeze", "description": "Fresh marine notes blended with sea salt, driftwood, and white tea. Like a walk on a pristine Goan beach.", "price": "1699.00", "stock": 70, "quantity_ml": 75, "category": "Eau de Toilette", "collections": ["Summer Essentials", "New Arrivals"]},
-            {"name": "Green Tea & Bamboo", "description": "A serene, calming fragrance with green tea extract, fresh bamboo, and a touch of white iris.", "price": "1599.00", "discount_price": "1299.00", "stock": 55, "quantity_ml": 100, "category": "Eau de Toilette", "collections": ["Office Wear"]},
-            {"name": "Lavender Dreams", "description": "French lavender harmonized with tonka bean, coumarin, and creamy musk. Relaxing yet elegant.", "price": "1799.00", "stock": 40, "quantity_ml": 75, "category": "Eau de Toilette", "collections": ["Office Wear", "New Arrivals"]},
+            # ── Women (4 products) ──
+            {
+                "name": "Midnight Rose Parfum",
+                "description": "Intoxicating night-blooming Bulgarian rose layered with white musk, Turkish rose absolute, and a warm vanilla base. Sensual, romantic, and unforgettable. A true statement fragrance.",
+                "price": "3999.00", "discount_price": "3499.00",
+                "stock": 40, "quantity_ml": 75,
+                "category": "Women",
+                "collections": ["Best Sellers", "Wedding Collection"],
+            },
+            {
+                "name": "Jasmine & White Tea",
+                "description": "A serene, calming scent blending Indian mogra jasmine with Japanese white tea and soft iris. Delicate yet long-lasting. Perfect for daytime wear and professional settings.",
+                "price": "2499.00",
+                "stock": 55, "quantity_ml": 100,
+                "category": "Women",
+                "collections": ["Indian Products", "New Arrivals"],
+            },
+            {
+                "name": "Velvet Orchid Luxe",
+                "description": "An opulent floral-oriental masterpiece. Black orchid meets honey absolute, dark chocolate, and patchouli. This luxurious parfum is for the woman who wants to leave an impression.",
+                "price": "4499.00", "discount_price": "3999.00",
+                "stock": 30, "quantity_ml": 50,
+                "category": "Women",
+                "collections": ["Swiss Products", "Best Sellers"],
+            },
+            {
+                "name": "Cherry Blossom Mist",
+                "description": "A playful, light body mist bursting with Japanese cherry blossom, peach nectar, and cotton candy sweetness. Fresh, fruity, and perfect for everyday wear.",
+                "price": "899.00", "discount_price": "699.00",
+                "stock": 120, "quantity_ml": 200,
+                "category": "Women",
+                "collections": ["Summer Essentials", "New Arrivals"],
+            },
 
-            # Body Mist
-            {"name": "Strawberry Kiss", "description": "A playful, fruity mist bursting with ripe strawberries, peach nectar, and cotton candy sweetness.", "price": "699.00", "discount_price": "549.00", "stock": 120, "quantity_ml": 200, "category": "Body Mist", "collections": ["Summer Essentials", "Best Sellers"]},
-            {"name": "Vanilla Cloud", "description": "Warm Madagascar vanilla wrapped in whipped cream and soft caramel. Cozy, comforting, and addictive.", "price": "749.00", "stock": 100, "quantity_ml": 150, "category": "Body Mist", "collections": ["Best Sellers"]},
-            {"name": "Tropical Paradise", "description": "Escape to the tropics with coconut water, pineapple, and frangipani flowers. Pure summer in a bottle.", "price": "649.00", "stock": 90, "quantity_ml": 200, "category": "Body Mist", "collections": ["Summer Essentials"]},
-
-            # Attar
-            {"name": "Mysore Sandalwood Attar", "description": "Pure, authentic Mysore sandalwood oil. Warm, creamy, and meditative. A timeless Indian classic.", "price": "5999.00", "discount_price": "5499.00", "stock": 20, "quantity_ml": 12, "category": "Attar", "collections": ["Wedding Collection", "Best Sellers"]},
-            {"name": "Gulab Attar", "description": "Traditional rose attar distilled from thousands of Kannauj rose petals. Rich, deep, and absolutely natural.", "price": "3999.00", "stock": 25, "quantity_ml": 10, "category": "Attar", "collections": ["Wedding Collection"]},
-            {"name": "Musk Amber Attar", "description": "An exotic blend of white musk and golden amber. Oil-based, alcohol-free, and incredibly long-lasting.", "price": "2999.00", "stock": 30, "quantity_ml": 12, "category": "Attar", "collections": ["Date Night"]},
-
-            # Cologne
-            {"name": "Classic Vetiver", "description": "Timeless vetiver cologne with hints of lemon and white pepper. The quintessential gentleman's fragrance.", "price": "999.00", "discount_price": "799.00", "stock": 75, "quantity_ml": 150, "category": "Cologne", "collections": ["Office Wear"]},
-            {"name": "Fresh Aqua Sport", "description": "An invigorating aquatic cologne designed for active lifestyles. Cool, clean, and energizing.", "price": "899.00", "stock": 85, "quantity_ml": 100, "category": "Cologne", "collections": ["Summer Essentials"]},
-
-            # Gift Sets
-            {"name": "The Signature Collection Box", "description": "A luxury gift set featuring 5 of our bestselling miniatures (10ml each) in a premium wooden box. Perfect for gifting.", "price": "4499.00", "discount_price": "3799.00", "stock": 40, "quantity_ml": 50, "category": "Gift Sets", "collections": ["Best Sellers", "Wedding Collection"]},
-            {"name": "Date Night Duo", "description": "His & Hers fragrance set — Swiss Aroma Noir (50ml) + Midnight Jasmine (50ml) in a romantic gift box.", "price": "5499.00", "discount_price": "4799.00", "stock": 25, "quantity_ml": 100, "category": "Gift Sets", "collections": ["Date Night", "New Arrivals"]},
+            # ── Unisex (4 products) ──
+            {
+                "name": "Mysore Sandalwood Attar",
+                "description": "Pure, authentic Mysore sandalwood oil distilled using traditional Indian methods. Warm, creamy, and meditative. Alcohol-free, oil-based, and incredibly long-lasting (12+ hours).",
+                "price": "5999.00", "discount_price": "5499.00",
+                "stock": 20, "quantity_ml": 12,
+                "category": "Unisex",
+                "collections": ["Indian Products", "Best Sellers", "Wedding Collection"],
+            },
+            {
+                "name": "Saffron & Amber Fusion",
+                "description": "Precious Kashmiri saffron meets golden amber in this luxurious unisex fragrance. Enriched with rose absolute and warm benzoin. A regal scent for special occasions.",
+                "price": "3999.00",
+                "stock": 35, "quantity_ml": 50,
+                "category": "Unisex",
+                "collections": ["Indian Products", "Wedding Collection"],
+            },
+            {
+                "name": "Citrus Bergamot Fresh",
+                "description": "An energising splash of Italian bergamot, Sicilian lemon, and green mandarin balanced with white musk and light cedar. Clean, zesty, and universally loved.",
+                "price": "1999.00", "discount_price": "1699.00",
+                "stock": 70, "quantity_ml": 100,
+                "category": "Unisex",
+                "collections": ["Swiss Products", "Summer Essentials"],
+            },
+            {
+                "name": "Musk & Vanilla Unisex",
+                "description": "A cozy, addictive blend of white musk, Madagascar vanilla, and soft sandalwood. Warm, inviting, and suitable for all genders. A modern comfort scent.",
+                "price": "2299.00",
+                "stock": 45, "quantity_ml": 75,
+                "category": "Unisex",
+                "collections": ["New Arrivals", "Best Sellers"],
+            },
         ]
 
-        # Map category names to objects
+        # Map category/collection names to objects
         cat_map = {c.name: c for c in categories}
         col_map = {c.name: c for c in collections}
 
         products = []
         for data in products_data:
-            cat_name = data.pop("collections_list", None) or data.pop("collections")
+            collection_names = data.pop("collections")
             category_name = data.pop("category")
 
             product, created = Product.objects.get_or_create(
@@ -212,8 +356,6 @@ class Command(BaseCommand):
             )
 
             if created:
-                # Assign collections
-                collection_names = cat_name if isinstance(cat_name, list) else [cat_name]
                 for col_name in collection_names:
                     if col_name in col_map:
                         product.collections.add(col_map[col_name])
@@ -222,6 +364,60 @@ class Command(BaseCommand):
 
         self.stdout.write(f"  Created {len(products)} products")
         return products
+
+    # ------------------------------------------------------------------
+    # PRODUCT IMAGES — download from Unsplash
+    # ------------------------------------------------------------------
+    def _create_product_images(self, products):
+        from products.models import ProductImage
+
+        self.stdout.write("[IMAGES] Downloading product images from Unsplash...")
+        images_created = 0
+
+        for product in products:
+            # Skip if product already has images
+            if product.images.exists():
+                continue
+
+            urls = PRODUCT_IMAGES.get(product.name, [])
+            if not urls:
+                self.stdout.write(f"  [!] No images configured for: {product.name}")
+                continue
+
+            for sort_order, url in enumerate(urls):
+                try:
+                    # Download image from Unsplash
+                    req = urllib.request.Request(
+                        url,
+                        headers={"User-Agent": "SwissAroma-Seeder/1.0"},
+                    )
+                    response = urllib.request.urlopen(req, timeout=15)
+                    image_data = response.read()
+
+                    # Generate a clean filename
+                    slug = product.slug or product.name.lower().replace(" ", "-")
+                    filename = f"{slug}-{sort_order + 1}.jpg"
+
+                    # Save as ProductImage
+                    product_image = ProductImage(
+                        product=product,
+                        alt_text=f"{product.name} - Image {sort_order + 1}",
+                        sort_order=sort_order,
+                    )
+                    product_image.image.save(
+                        filename,
+                        ContentFile(image_data),
+                        save=True,
+                    )
+                    images_created += 1
+                    self.stdout.write(f"  [OK] {product.name} -- image {sort_order + 1}")
+
+                except Exception as e:
+                    self.stdout.write(
+                        self.style.WARNING(f"  [FAIL] Failed to download image for {product.name}: {e}")
+                    )
+
+        self.stdout.write(f"  Downloaded {images_created} product images")
 
     # ------------------------------------------------------------------
     # DISCOUNTS

@@ -137,20 +137,11 @@ class ProductImage(models.Model):
     )
     image = models.ImageField(upload_to="products/")
     alt_text = models.CharField(max_length=200, blank=True)
-    is_primary = models.BooleanField(default=False)
     sort_order = models.PositiveSmallIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["sort_order", "-is_primary"]
-
-    def save(self, *args, **kwargs):
-        # Ensure only one primary image per product
-        if self.is_primary:
-            ProductImage.objects.filter(
-                product=self.product, is_primary=True
-            ).exclude(pk=self.pk).update(is_primary=False)
-        super().save(*args, **kwargs)
+        ordering = ["sort_order"]
 
     def __str__(self):
-        return f"Image for {self.product.name} ({'primary' if self.is_primary else 'secondary'})"
+        return f"Image for {self.product.name} (order: {self.sort_order})"

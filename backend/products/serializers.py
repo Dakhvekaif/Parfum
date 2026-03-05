@@ -31,7 +31,7 @@ class CollectionSerializer(serializers.ModelSerializer):
 class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage
-        fields = ["id", "image", "alt_text", "is_primary", "sort_order"]
+        fields = ["id", "image", "alt_text", "sort_order"]
 
 
 class ProductListSerializer(serializers.ModelSerializer):
@@ -53,11 +53,10 @@ class ProductListSerializer(serializers.ModelSerializer):
         ]
 
     def get_primary_image(self, obj):
-        primary = obj.images.filter(is_primary=True).first()
-        if not primary:
-            primary = obj.images.first()
-        if primary:
-            return ProductImageSerializer(primary).data
+        """Returns the first image by sort_order as the main image."""
+        first_image = obj.images.first()  # already ordered by sort_order
+        if first_image:
+            return ProductImageSerializer(first_image).data
         return None
 
 

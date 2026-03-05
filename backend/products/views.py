@@ -169,24 +169,19 @@ class ProductImageUploadView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Handle is_primary as both string ("true") and boolean (true)
-        is_primary_raw = request.data.get("is_primary", False)
-        if isinstance(is_primary_raw, str):
-            is_primary = is_primary_raw.lower() == "true"
-        else:
-            is_primary = bool(is_primary_raw)
-
-        # Auto-set first image as primary if product has no images yet
-        if not product.images.exists():
-            is_primary = True
-
         alt_text = request.data.get("alt_text", "")
+
+        # Auto-assign sort_order: next in sequence (0, 1, 2, ...)
+        last_order = product.images.order_by("-sort_order").values_list(
+            "sort_order", flat=True
+        ).first()
+        next_order = (last_order + 1) if last_order is not None else 0
 
         product_image = ProductImage.objects.create(
             product=product,
             image=image,
             alt_text=alt_text,
-            is_primary=is_primary,
+            sort_order=next_order,
         )
 
         return Response(

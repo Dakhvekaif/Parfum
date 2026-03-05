@@ -37,5 +37,5 @@ class CollectionAdmin(admin.ModelAdmin):
 
 @admin.register(ProductImage)
 class ProductImageAdmin(admin.ModelAdmin):
-    list_display = ["product", "is_primary", "sort_order", "created_at"]
-    list_filter = ["is_primary"]
+    list_display = ["product", "sort_order", "created_at"]
+    list_filter = ["product"]
