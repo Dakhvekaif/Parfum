@@ -4,6 +4,12 @@ import django.db.models.deletion
 from django.db import migrations, models
 
 
+def clear_cart_items(apps, schema_editor):
+    """Clear existing cart items before adding the variant FK."""
+    CartItem = apps.get_model("cart", "CartItem")
+    CartItem.objects.all().delete()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -16,6 +22,8 @@ class Migration(migrations.Migration):
             name='cartitem',
             unique_together=set(),
         ),
+        # Clear existing cart items so the new FK doesn't violate constraints
+        migrations.RunPython(clear_cart_items, migrations.RunPython.noop),
         migrations.AddField(
             model_name='cartitem',
             name='variant',
