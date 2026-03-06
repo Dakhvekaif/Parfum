@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 from orders.models import Order
 from orders.serializers import OrderListSerializer
 from parfum.permissions import IsAdmin
-from products.models import Product
+from products.models import Product, ProductVariant
 
 from .models import InventoryTransfer, SalesAnalytics
 from .serializers import (
@@ -49,8 +49,8 @@ class DashboardView(APIView):
         total_customers = User.objects.filter(role="customer").count()
         total_products = Product.objects.filter(is_active=True).count()
         pending_orders = Order.objects.filter(status="pending").count()
-        low_stock_products = Product.objects.filter(
-            is_active=True, stock__lte=10
+        low_stock_variants = ProductVariant.objects.filter(
+            product__is_active=True, stock__lte=10
         ).count()
 
         # Recent orders
@@ -75,7 +75,7 @@ class DashboardView(APIView):
             "total_customers": total_customers,
             "total_products": total_products,
             "pending_orders": pending_orders,
-            "low_stock_products": low_stock_products,
+            "low_stock_products": low_stock_variants,
             "recent_orders": recent_orders_data,
             "revenue_trend": revenue_trend,
         })
@@ -116,10 +116,28 @@ class InventoryTransferCreateView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
+        # Get variant (optional, defaults to first variant)
+        variant_id = request.data.get("variant_id")
+        if variant_id:
+            try:
+                variant = ProductVariant.objects.get(pk=variant_id, product=product)
+            except ProductVariant.DoesNotExist:
+                return Response(
+                    {"error": "Variant not found for this product."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+        else:
+            variant = product.variants.first()
+            if not variant:
+                return Response(
+                    {"error": "Product has no variants."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
         # Validate stock out
-        if data["transfer_type"] == "out" and product.stock < data["quantity"]:
+        if data["transfer_type"] == "out" and variant.stock < data["quantity"]:
             return Response(
-                {"error": f"Insufficient stock. Current: {product.stock}."},
+                {"error": f"Insufficient stock. Current: {variant.stock} ({variant.quantity_ml}ml)."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -132,12 +150,12 @@ class InventoryTransferCreateView(APIView):
             notes=data.get("notes", ""),
         )
 
-        # Update stock
+        # Update variant stock
         if data["transfer_type"] == "in":
-            product.stock += data["quantity"]
+            variant.stock += data["quantity"]
         else:
-            product.stock -= data["quantity"]
-        product.save(update_fields=["stock"])
+            variant.stock -= data["quantity"]
+        variant.save(update_fields=["stock"])
 
         return Response(
             InventoryTransferSerializer(transfer).data,

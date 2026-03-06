@@ -36,7 +36,9 @@ class CheckoutView(APIView):
 
         # Get cart
         try:
-            cart = Cart.objects.prefetch_related("items__product").get(user=request.user)
+            cart = Cart.objects.prefetch_related(
+                "items__product", "items__variant"
+            ).get(user=request.user)
         except Cart.DoesNotExist:
             return Response(
                 {"error": "Cart is empty."},
@@ -50,12 +52,13 @@ class CheckoutView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Validate stock for all items
+        # Validate stock for all items (against variant stock)
         errors = []
         for item in cart_items:
-            if item.quantity > item.product.stock:
+            if item.quantity > item.variant.stock:
                 errors.append(
-                    f"{item.product.name}: only {item.product.stock} in stock "
+                    f"{item.product.name} ({item.variant.quantity_ml}ml): "
+                    f"only {item.variant.stock} in stock "
                     f"(requested {item.quantity})"
                 )
             if not item.product.is_active:
@@ -106,18 +109,20 @@ class CheckoutView(APIView):
             status=Order.Status.PENDING,
         )
 
-        # Create order items (snapshot) & deduct stock
+        # Create order items (snapshot) & deduct stock from variant
         for item in cart_items:
             OrderItem.objects.create(
                 order=order,
                 product=item.product,
+                variant=item.variant,
                 product_name=item.product.name,
+                quantity_ml=item.variant.quantity_ml,
                 quantity=item.quantity,
-                price_at_purchase=item.product.effective_price,
+                price_at_purchase=item.variant.effective_price,
             )
-            # Deduct stock
-            item.product.stock -= item.quantity
-            item.product.save(update_fields=["stock"])
+            # Deduct stock from the variant
+            item.variant.stock -= item.quantity
+            item.variant.save(update_fields=["stock"])
 
         # Create payment record
         Payment.objects.create(

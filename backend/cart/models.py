@@ -1,6 +1,7 @@
 """
 Cart and Wishlist models.
-Cart uses header-detail pattern: Cart → CartItems.
+Cart uses header-detail pattern: Cart -> CartItems.
+CartItem now references a ProductVariant (specific ML size) instead of Product directly.
 """
 
 from django.conf import settings
@@ -31,7 +32,7 @@ class Cart(models.Model):
 
 
 class CartItem(models.Model):
-    """Individual products in cart with quantities (line items)."""
+    """Individual variant in cart with quantity (line items)."""
 
     cart = models.ForeignKey(
         Cart,
@@ -43,19 +44,24 @@ class CartItem(models.Model):
         on_delete=models.CASCADE,
         related_name="cart_items",
     )
+    variant = models.ForeignKey(
+        "products.ProductVariant",
+        on_delete=models.CASCADE,
+        related_name="cart_items",
+    )
     quantity = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ("cart", "product")
+        unique_together = ("cart", "variant")
 
     def __str__(self):
-        return f"{self.quantity}x {self.product.name}"
+        return f"{self.quantity}x {self.product.name} ({self.variant.quantity_ml}ml)"
 
     @property
     def line_total(self):
-        return self.product.effective_price * self.quantity
+        return self.variant.effective_price * self.quantity
 
 
 class Wishlist(models.Model):
@@ -78,4 +84,4 @@ class Wishlist(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.user.email} ♥ {self.product.name}"
+        return f"{self.user.email} - {self.product.name}"

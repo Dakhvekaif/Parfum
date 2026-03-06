@@ -10,13 +10,15 @@ from rest_framework.views import APIView
 
 from parfum.permissions import IsAdmin
 
-from .models import Category, Collection, Product, ProductImage
+from .models import Category, Collection, Product, ProductImage, ProductVariant
 from .serializers import (
     CategorySerializer,
     CollectionSerializer,
     ProductDetailSerializer,
     ProductImageSerializer,
     ProductListSerializer,
+    ProductVariantSerializer,
+    ProductVariantWriteSerializer,
     ProductWriteSerializer,
 )
 
@@ -34,24 +36,28 @@ class ProductListView(generics.ListAPIView):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["category__slug", "is_active"]
     search_fields = ["name", "description"]
-    ordering_fields = ["price", "created_at", "avg_rating", "name"]
+    ordering_fields = ["created_at", "avg_rating", "name"]
     ordering = ["-created_at"]
 
     def get_queryset(self):
-        queryset = Product.objects.filter(is_active=True).select_related("category").prefetch_related("images")
+        queryset = (
+            Product.objects.filter(is_active=True)
+            .select_related("category")
+            .prefetch_related("images", "variants")
+        )
 
         # Filter by collection slug
         collection = self.request.query_params.get("collection")
         if collection:
             queryset = queryset.filter(collections__slug=collection)
 
-        # Price range filter
+        # Price range filter (filters on variant prices)
         min_price = self.request.query_params.get("min_price")
         max_price = self.request.query_params.get("max_price")
         if min_price:
-            queryset = queryset.filter(price__gte=min_price)
+            queryset = queryset.filter(variants__price__gte=min_price).distinct()
         if max_price:
-            queryset = queryset.filter(price__lte=max_price)
+            queryset = queryset.filter(variants__price__lte=max_price).distinct()
 
         return queryset
 
@@ -65,7 +71,7 @@ class ProductDetailView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         return Product.objects.select_related("category").prefetch_related(
-            "collections", "images", "reviews"
+            "collections", "images", "variants", "reviews"
         )
 
 
@@ -99,11 +105,11 @@ class AdminProductViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["category", "is_active"]
     search_fields = ["name", "description"]
-    ordering_fields = ["price", "created_at", "stock", "name"]
+    ordering_fields = ["created_at", "name"]
 
     def get_queryset(self):
         return Product.objects.select_related("category").prefetch_related(
-            "collections", "images"
+            "collections", "images", "variants"
         )
 
     def get_serializer_class(self):
@@ -122,6 +128,7 @@ class AdminProductViewSet(viewsets.ModelViewSet):
             product.reviews.all().delete()
             product.inventory_transfers.all().delete()
             product.images.all().delete()
+            product.variants.all().delete()
             product.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Exception:
@@ -145,6 +152,71 @@ class AdminCollectionViewSet(viewsets.ModelViewSet):
     queryset = Collection.objects.all()
     serializer_class = CollectionSerializer
     permission_classes = [IsAuthenticated, IsAdmin]
+
+
+class AdminVariantView(APIView):
+    """
+    POST /api/admin/products/{product_id}/variants/ — Add variant.
+    PUT  /api/admin/products/{product_id}/variants/{variant_id}/ — Update variant.
+    DELETE /api/admin/products/{product_id}/variants/{variant_id}/ — Delete variant.
+    """
+
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def post(self, request, product_id):
+        """Add a new variant to a product."""
+        try:
+            product = Product.objects.get(pk=product_id)
+        except Product.DoesNotExist:
+            return Response(
+                {"error": "Product not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = ProductVariantWriteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # Check for duplicate ml size
+        ml = serializer.validated_data["quantity_ml"]
+        if product.variants.filter(quantity_ml=ml).exists():
+            return Response(
+                {"error": f"A {ml}ml variant already exists for this product."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        variant = serializer.save(product=product)
+        return Response(
+            ProductVariantSerializer(variant).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    def put(self, request, product_id, variant_id=None):
+        """Update an existing variant."""
+        try:
+            variant = ProductVariant.objects.get(pk=variant_id, product_id=product_id)
+        except ProductVariant.DoesNotExist:
+            return Response(
+                {"error": "Variant not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = ProductVariantWriteSerializer(variant, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(ProductVariantSerializer(variant).data)
+
+    def delete(self, request, product_id, variant_id=None):
+        """Delete a variant."""
+        try:
+            variant = ProductVariant.objects.get(pk=variant_id, product_id=product_id)
+        except ProductVariant.DoesNotExist:
+            return Response(
+                {"error": "Variant not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        variant.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ProductImageUploadView(APIView):

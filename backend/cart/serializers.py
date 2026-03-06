@@ -4,24 +4,25 @@ Cart and Wishlist serializers.
 
 from rest_framework import serializers
 
-from products.serializers import ProductListSerializer
+from products.serializers import ProductListSerializer, ProductVariantSerializer
 
 from .models import Cart, CartItem, Wishlist
 
 
 class CartItemSerializer(serializers.ModelSerializer):
     product = ProductListSerializer(read_only=True)
+    variant = ProductVariantSerializer(read_only=True)
     line_total = serializers.ReadOnlyField()
 
     class Meta:
         model = CartItem
-        fields = ["id", "product", "quantity", "line_total"]
+        fields = ["id", "product", "variant", "quantity", "line_total"]
 
 
 class CartItemWriteSerializer(serializers.Serializer):
-    """For adding/updating cart items."""
+    """For adding/updating cart items — now uses variant_id."""
 
-    product_id = serializers.IntegerField()
+    variant_id = serializers.IntegerField()
     quantity = serializers.IntegerField(min_value=1, default=1)
 
 

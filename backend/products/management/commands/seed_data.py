@@ -23,13 +23,12 @@ User = get_user_model()
 # ──────────────────────────────────────────────────
 # UNSPLASH IMAGE URLS (free, permanent, high quality)
 # Each product gets 2-3 unique images.
-# Format: {product_name: [url1, url2, ...]}
 # ──────────────────────────────────────────────────
 PRODUCT_IMAGES = {
     # ── Men's Fragrances ──
     "Alpine Noir EDP": [
         "https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=800&q=80",
-        "https://images.unsplash.com/photo-1594035910387-fbd1a485b12e?w=800&q=80",
+        "https://images.unsplash.com/photo-1541643600914-78b084683601?w=800&q=80",
         "https://images.unsplash.com/photo-1547887538-e3a2f32cb1cc?w=800&q=80",
     ],
     "Swiss Cedar & Vetiver": [
@@ -40,7 +39,7 @@ PRODUCT_IMAGES = {
     "Dark Oud Elixir": [
         "https://images.unsplash.com/photo-1541643600914-78b084683601?w=800&q=80",
         "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=800&q=80",
-        "https://images.unsplash.com/photo-1619994403073-2cec844b8c63?w=800&q=80",
+        "https://images.unsplash.com/photo-1587017539504-67cfbddac569?w=800&q=80",
     ],
     "Aqua Sport Fresh": [
         "https://images.unsplash.com/photo-1557170334-a9632e77c6e4?w=800&q=80",
@@ -51,41 +50,41 @@ PRODUCT_IMAGES = {
     "Midnight Rose Parfum": [
         "https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?w=800&q=80",
         "https://images.unsplash.com/photo-1563170351-be82bc888aa4?w=800&q=80",
-        "https://images.unsplash.com/photo-1596516109370-29001ec8ec36?w=800&q=80",
+        "https://images.unsplash.com/photo-1541643600914-78b084683601?w=800&q=80",
     ],
     "Jasmine & White Tea": [
-        "https://images.unsplash.com/photo-1588514727390-91fd2eab064a?w=800&q=80",
-        "https://images.unsplash.com/photo-1615634260167-c8cdede054de?w=800&q=80",
-        "https://images.unsplash.com/photo-1608528577891-eb055944f2e7?w=800&q=80",
+        "https://images.unsplash.com/photo-1557170334-a9632e77c6e4?w=800&q=80",
+        "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=800&q=80",
+        "https://images.unsplash.com/photo-1547887538-e3a2f32cb1cc?w=800&q=80",
     ],
     "Velvet Orchid Luxe": [
         "https://images.unsplash.com/photo-1592842232655-e5d345cbc2d0?w=800&q=80",
-        "https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=800&q=80",
+        "https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=800&q=80",
     ],
     "Cherry Blossom Mist": [
-        "https://images.unsplash.com/photo-1616949755610-8c9c3148e13e?w=800&q=80",
-        "https://images.unsplash.com/photo-1617897903246-719242758050?w=800&q=80",
-        "https://images.unsplash.com/photo-1616093875689-e1227f031c2c?w=800&q=80",
+        "https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?w=800&q=80",
+        "https://images.unsplash.com/photo-1563170351-be82bc888aa4?w=800&q=80",
+        "https://images.unsplash.com/photo-1592842232655-e5d345cbc2d0?w=800&q=80",
     ],
 
     # ── Unisex Fragrances ──
     "Mysore Sandalwood Attar": [
-        "https://images.unsplash.com/photo-1595425964272-fc617fa31e37?w=800&q=80",
-        "https://images.unsplash.com/photo-1602928298849-325cec8771c0?w=800&q=80",
-        "https://images.unsplash.com/photo-1600612253971-422b1a834cbb?w=800&q=80",
+        "https://images.unsplash.com/photo-1595535373192-fc8935bacd89?w=800&q=80",
+        "https://images.unsplash.com/photo-1590736704728-f4730bb30770?w=800&q=80",
+        "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=800&q=80",
     ],
     "Saffron & Amber Fusion": [
-        "https://images.unsplash.com/photo-1610462275440-4ea0976f46f2?w=800&q=80",
-        "https://images.unsplash.com/photo-1605278864684-a41d5d06e149?w=800&q=80",
+        "https://images.unsplash.com/photo-1547887538-e3a2f32cb1cc?w=800&q=80",
+        "https://images.unsplash.com/photo-1541643600914-78b084683601?w=800&q=80",
     ],
     "Citrus Bergamot Fresh": [
-        "https://images.unsplash.com/photo-1594035910387-fbd1a485b12e?w=800&q=80",
-        "https://images.unsplash.com/photo-1528740561666-dc2479dc08ab?w=800&q=80",
-        "https://images.unsplash.com/photo-1583445013765-74bcd5b30d37?w=800&q=80",
+        "https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=800&q=80",
+        "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=800&q=80",
+        "https://images.unsplash.com/photo-1557170334-a9632e77c6e4?w=800&q=80",
     ],
     "Musk & Vanilla Unisex": [
-        "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&q=80",
-        "https://images.unsplash.com/photo-1612198188571-1b507cee5dab?w=800&q=80",
+        "https://images.unsplash.com/photo-1587017539504-67cfbddac569?w=800&q=80",
+        "https://images.unsplash.com/photo-1563170351-be82bc888aa4?w=800&q=80",
     ],
 }
 
@@ -110,6 +109,7 @@ class Command(BaseCommand):
         categories = self._create_categories()
         collections = self._create_collections()
         products = self._create_products(categories, collections)
+        self._create_variants(products)
         self._create_product_images(products)
         self._create_discounts()
         self._create_orders(users, products)
@@ -127,7 +127,7 @@ class Command(BaseCommand):
         from cart.models import Cart, CartItem, Wishlist
         from discounts.models import Discount
         from orders.models import Order, OrderItem, Payment
-        from products.models import Category, Collection, Product, ProductImage
+        from products.models import Category, Collection, Product, ProductImage, ProductVariant
         from reviews.models import Review
 
         self.stdout.write("[CLEAR] Clearing existing seed data...")
@@ -142,6 +142,7 @@ class Command(BaseCommand):
         SalesAnalytics.objects.all().delete()
         Discount.objects.all().delete()
         ProductImage.objects.all().delete()
+        ProductVariant.objects.all().delete()
         Product.objects.all().delete()
         Collection.objects.all().delete()
         Category.objects.all().delete()
@@ -184,9 +185,9 @@ class Command(BaseCommand):
 
         self.stdout.write("[CATEGORIES] Creating categories...")
         categories_data = [
-            {"name": "Men", "description": "Bold, confident fragrances crafted for the modern man. From fresh aquatics to deep ouds."},
-            {"name": "Women", "description": "Elegant, captivating scents designed for her. Florals, orientals, and everything in between."},
-            {"name": "Unisex", "description": "Versatile fragrances that transcend gender. Perfect for anyone who loves great perfume."},
+            {"name": "Men", "description": "Bold, confident fragrances crafted for the modern man."},
+            {"name": "Women", "description": "Elegant, captivating scents designed for her."},
+            {"name": "Unisex", "description": "Versatile fragrances that transcend gender."},
         ]
 
         categories = []
@@ -205,12 +206,12 @@ class Command(BaseCommand):
 
         self.stdout.write("[COLLECTIONS] Creating collections...")
         collections_data = [
-            {"name": "Indian Products", "description": "Authentic Indian fragrances — attars, sandalwood, and traditional scents rooted in centuries of perfumery."},
-            {"name": "Swiss Products", "description": "Premium Swiss-crafted fragrances with Alpine-inspired ingredients and European sophistication."},
-            {"name": "New Arrivals", "description": "The latest additions to our fragrance family. Fresh drops you don't want to miss."},
-            {"name": "Best Sellers", "description": "Our most popular perfumes loved by thousands of customers."},
+            {"name": "Indian Products", "description": "Authentic Indian fragrances -- attars, sandalwood, and traditional scents."},
+            {"name": "Swiss Products", "description": "Premium Swiss-crafted fragrances with Alpine-inspired ingredients."},
+            {"name": "New Arrivals", "description": "The latest additions to our fragrance family."},
+            {"name": "Best Sellers", "description": "Our most popular perfumes loved by thousands."},
             {"name": "Summer Essentials", "description": "Light, citrusy fragrances perfect for hot Indian summers."},
-            {"name": "Wedding Collection", "description": "Luxurious fragrances crafted for the most special day of your life."},
+            {"name": "Wedding Collection", "description": "Luxurious fragrances for the most special day of your life."},
         ]
 
         collections = []
@@ -222,7 +223,7 @@ class Command(BaseCommand):
         return collections
 
     # ------------------------------------------------------------------
-    # PRODUCTS (3-4 per category = 12 total)
+    # PRODUCTS (3-4 per category, no price/stock — that's in variants)
     # ------------------------------------------------------------------
     def _create_products(self, categories, collections):
         from products.models import Product
@@ -233,33 +234,25 @@ class Command(BaseCommand):
             # ── Men (4 products) ──
             {
                 "name": "Alpine Noir EDP",
-                "description": "A bold, mysterious blend of Swiss pine, black amber, and smoky vetiver. This intense Eau de Parfum is crafted in the Swiss tradition and commands attention with every step. Long-lasting 8-10 hour performance.",
-                "price": "3499.00", "discount_price": "2999.00",
-                "stock": 50, "quantity_ml": 100,
+                "description": "A bold, mysterious blend of Swiss pine, black amber, and smoky vetiver. This intense Eau de Parfum commands attention with every step.",
                 "category": "Men",
                 "collections": ["Swiss Products", "Best Sellers"],
             },
             {
                 "name": "Swiss Cedar & Vetiver",
-                "description": "Crisp Alpine cedarwood meets earthy vetiver in this sophisticated gentleman's fragrance. Notes of bergamot and white pepper add a modern edge. Perfect for the office or evening events.",
-                "price": "2999.00",
-                "stock": 60, "quantity_ml": 75,
+                "description": "Crisp Alpine cedarwood meets earthy vetiver. Notes of bergamot and white pepper add a modern edge. Perfect for the office.",
                 "category": "Men",
                 "collections": ["Swiss Products", "New Arrivals"],
             },
             {
                 "name": "Dark Oud Elixir",
-                "description": "A rich, opulent blend of aged Indian oud, saffron threads, and golden amber. This premium attar-inspired EDP bridges Eastern tradition with modern perfumery. Incredibly long-lasting.",
-                "price": "4999.00", "discount_price": "4499.00",
-                "stock": 25, "quantity_ml": 50,
+                "description": "A rich, opulent blend of aged Indian oud, saffron threads, and golden amber. Incredibly long-lasting.",
                 "category": "Men",
                 "collections": ["Indian Products", "Wedding Collection"],
             },
             {
                 "name": "Aqua Sport Fresh",
-                "description": "An invigorating aquatic cologne with sea salt, cucumber, and driftwood. Clean, energising, and designed for active lifestyles. Light enough for Indian summers.",
-                "price": "1499.00", "discount_price": "1199.00",
-                "stock": 80, "quantity_ml": 150,
+                "description": "An invigorating aquatic cologne with sea salt, cucumber, and driftwood. Light enough for Indian summers.",
                 "category": "Men",
                 "collections": ["Summer Essentials", "New Arrivals"],
             },
@@ -267,33 +260,25 @@ class Command(BaseCommand):
             # ── Women (4 products) ──
             {
                 "name": "Midnight Rose Parfum",
-                "description": "Intoxicating night-blooming Bulgarian rose layered with white musk, Turkish rose absolute, and a warm vanilla base. Sensual, romantic, and unforgettable. A true statement fragrance.",
-                "price": "3999.00", "discount_price": "3499.00",
-                "stock": 40, "quantity_ml": 75,
+                "description": "Intoxicating night-blooming Bulgarian rose layered with white musk, Turkish rose absolute, and warm vanilla base.",
                 "category": "Women",
                 "collections": ["Best Sellers", "Wedding Collection"],
             },
             {
                 "name": "Jasmine & White Tea",
-                "description": "A serene, calming scent blending Indian mogra jasmine with Japanese white tea and soft iris. Delicate yet long-lasting. Perfect for daytime wear and professional settings.",
-                "price": "2499.00",
-                "stock": 55, "quantity_ml": 100,
+                "description": "Indian mogra jasmine with Japanese white tea and soft iris. Delicate yet long-lasting. Perfect for daytime wear.",
                 "category": "Women",
                 "collections": ["Indian Products", "New Arrivals"],
             },
             {
                 "name": "Velvet Orchid Luxe",
-                "description": "An opulent floral-oriental masterpiece. Black orchid meets honey absolute, dark chocolate, and patchouli. This luxurious parfum is for the woman who wants to leave an impression.",
-                "price": "4499.00", "discount_price": "3999.00",
-                "stock": 30, "quantity_ml": 50,
+                "description": "An opulent floral-oriental masterpiece. Black orchid meets honey absolute, dark chocolate, and patchouli.",
                 "category": "Women",
                 "collections": ["Swiss Products", "Best Sellers"],
             },
             {
                 "name": "Cherry Blossom Mist",
-                "description": "A playful, light body mist bursting with Japanese cherry blossom, peach nectar, and cotton candy sweetness. Fresh, fruity, and perfect for everyday wear.",
-                "price": "899.00", "discount_price": "699.00",
-                "stock": 120, "quantity_ml": 200,
+                "description": "A playful, light body mist with Japanese cherry blossom, peach nectar, and cotton candy sweetness.",
                 "category": "Women",
                 "collections": ["Summer Essentials", "New Arrivals"],
             },
@@ -301,39 +286,30 @@ class Command(BaseCommand):
             # ── Unisex (4 products) ──
             {
                 "name": "Mysore Sandalwood Attar",
-                "description": "Pure, authentic Mysore sandalwood oil distilled using traditional Indian methods. Warm, creamy, and meditative. Alcohol-free, oil-based, and incredibly long-lasting (12+ hours).",
-                "price": "5999.00", "discount_price": "5499.00",
-                "stock": 20, "quantity_ml": 12,
+                "description": "Pure, authentic Mysore sandalwood oil distilled using traditional Indian methods. Alcohol-free, 12+ hours.",
                 "category": "Unisex",
                 "collections": ["Indian Products", "Best Sellers", "Wedding Collection"],
             },
             {
                 "name": "Saffron & Amber Fusion",
-                "description": "Precious Kashmiri saffron meets golden amber in this luxurious unisex fragrance. Enriched with rose absolute and warm benzoin. A regal scent for special occasions.",
-                "price": "3999.00",
-                "stock": 35, "quantity_ml": 50,
+                "description": "Kashmiri saffron meets golden amber with rose absolute and warm benzoin. A regal scent for special occasions.",
                 "category": "Unisex",
                 "collections": ["Indian Products", "Wedding Collection"],
             },
             {
                 "name": "Citrus Bergamot Fresh",
-                "description": "An energising splash of Italian bergamot, Sicilian lemon, and green mandarin balanced with white musk and light cedar. Clean, zesty, and universally loved.",
-                "price": "1999.00", "discount_price": "1699.00",
-                "stock": 70, "quantity_ml": 100,
+                "description": "Italian bergamot, Sicilian lemon, and green mandarin balanced with white musk and light cedar.",
                 "category": "Unisex",
                 "collections": ["Swiss Products", "Summer Essentials"],
             },
             {
                 "name": "Musk & Vanilla Unisex",
-                "description": "A cozy, addictive blend of white musk, Madagascar vanilla, and soft sandalwood. Warm, inviting, and suitable for all genders. A modern comfort scent.",
-                "price": "2299.00",
-                "stock": 45, "quantity_ml": 75,
+                "description": "A cozy, addictive blend of white musk, Madagascar vanilla, and soft sandalwood. Warm and inviting.",
                 "category": "Unisex",
                 "collections": ["New Arrivals", "Best Sellers"],
             },
         ]
 
-        # Map category/collection names to objects
         cat_map = {c.name: c for c in categories}
         col_map = {c.name: c for c in collections}
 
@@ -346,10 +322,6 @@ class Command(BaseCommand):
                 name=data["name"],
                 defaults={
                     "description": data["description"],
-                    "price": Decimal(data["price"]),
-                    "discount_price": Decimal(data["discount_price"]) if data.get("discount_price") else None,
-                    "stock": data["stock"],
-                    "quantity_ml": data.get("quantity_ml", 100),
                     "category": cat_map[category_name],
                     "is_active": True,
                 },
@@ -364,6 +336,50 @@ class Command(BaseCommand):
 
         self.stdout.write(f"  Created {len(products)} products")
         return products
+
+    # ------------------------------------------------------------------
+    # VARIANTS — each product gets 10ml, 30ml, 50ml sizes
+    # ------------------------------------------------------------------
+    def _create_variants(self, products):
+        from products.models import ProductVariant
+
+        self.stdout.write("[VARIANTS] Creating product variants (10ml, 30ml, 50ml)...")
+
+        # Price tiers: {product_name: {ml: (price, discount_price_or_None)}}
+        variant_prices = {
+            "Alpine Noir EDP":        {10: ("999.00", None), 30: ("2499.00", None), 50: ("3499.00", "2999.00")},
+            "Swiss Cedar & Vetiver":  {10: ("899.00", None), 30: ("2299.00", None), 50: ("2999.00", None)},
+            "Dark Oud Elixir":        {10: ("1499.00", None), 30: ("3999.00", None), 50: ("4999.00", "4499.00")},
+            "Aqua Sport Fresh":       {10: ("499.00", None), 30: ("1199.00", "999.00"), 50: ("1499.00", "1199.00")},
+            "Midnight Rose Parfum":   {10: ("1199.00", None), 30: ("2999.00", None), 50: ("3999.00", "3499.00")},
+            "Jasmine & White Tea":    {10: ("799.00", None), 30: ("1999.00", None), 50: ("2499.00", None)},
+            "Velvet Orchid Luxe":     {10: ("1399.00", None), 30: ("3499.00", None), 50: ("4499.00", "3999.00")},
+            "Cherry Blossom Mist":    {10: ("299.00", None), 30: ("699.00", "549.00"), 50: ("899.00", "699.00")},
+            "Mysore Sandalwood Attar": {10: ("2999.00", None), 30: ("5999.00", "5499.00"), 50: ("8999.00", None)},
+            "Saffron & Amber Fusion": {10: ("1299.00", None), 30: ("2999.00", None), 50: ("3999.00", None)},
+            "Citrus Bergamot Fresh":  {10: ("599.00", None), 30: ("1499.00", None), 50: ("1999.00", "1699.00")},
+            "Musk & Vanilla Unisex":  {10: ("699.00", None), 30: ("1799.00", None), 50: ("2299.00", None)},
+        }
+
+        stock_range = (20, 80)
+        variants_created = 0
+
+        for product in products:
+            prices = variant_prices.get(product.name, {})
+            for ml, (price, discount) in prices.items():
+                _, created = ProductVariant.objects.get_or_create(
+                    product=product,
+                    quantity_ml=ml,
+                    defaults={
+                        "price": Decimal(price),
+                        "discount_price": Decimal(discount) if discount else None,
+                        "stock": random.randint(*stock_range),
+                    },
+                )
+                if created:
+                    variants_created += 1
+
+        self.stdout.write(f"  Created {variants_created} variants")
 
     # ------------------------------------------------------------------
     # PRODUCT IMAGES — download from Unsplash
@@ -386,7 +402,6 @@ class Command(BaseCommand):
 
             for sort_order, url in enumerate(urls):
                 try:
-                    # Download image from Unsplash
                     req = urllib.request.Request(
                         url,
                         headers={"User-Agent": "SwissAroma-Seeder/1.0"},
@@ -394,11 +409,9 @@ class Command(BaseCommand):
                     response = urllib.request.urlopen(req, timeout=15)
                     image_data = response.read()
 
-                    # Generate a clean filename
                     slug = product.slug or product.name.lower().replace(" ", "-")
                     filename = f"{slug}-{sort_order + 1}.jpg"
 
-                    # Save as ProductImage
                     product_image = ProductImage(
                         product=product,
                         alt_text=f"{product.name} - Image {sort_order + 1}",
@@ -431,7 +444,7 @@ class Command(BaseCommand):
         discounts_data = [
             {"code": "WELCOME10", "description": "10% off on your first order", "discount_type": "percentage", "value": "10.00", "min_order_amount": "999.00", "max_discount_amount": "500.00", "valid_from": now - timedelta(days=30), "valid_until": now + timedelta(days=180), "usage_limit": 0},
             {"code": "SUMMER25", "description": "25% off on summer collection", "discount_type": "percentage", "value": "25.00", "min_order_amount": "1499.00", "max_discount_amount": "1000.00", "valid_from": now - timedelta(days=10), "valid_until": now + timedelta(days=90), "usage_limit": 100},
-            {"code": "FLAT500", "description": "Flat ₹500 off on orders above ₹2999", "discount_type": "fixed", "value": "500.00", "min_order_amount": "2999.00", "max_discount_amount": None, "valid_from": now - timedelta(days=5), "valid_until": now + timedelta(days=60), "usage_limit": 50},
+            {"code": "FLAT500", "description": "Flat Rs.500 off on orders above Rs.2999", "discount_type": "fixed", "value": "500.00", "min_order_amount": "2999.00", "max_discount_amount": None, "valid_from": now - timedelta(days=5), "valid_until": now + timedelta(days=60), "usage_limit": 50},
             {"code": "WEDDING15", "description": "15% off on wedding collection", "discount_type": "percentage", "value": "15.00", "min_order_amount": "3999.00", "max_discount_amount": "2000.00", "valid_from": now, "valid_until": now + timedelta(days=120), "usage_limit": 200},
             {"code": "EXPIRED20", "description": "This coupon has expired (for testing)", "discount_type": "percentage", "value": "20.00", "min_order_amount": "0.00", "max_discount_amount": None, "valid_from": now - timedelta(days=60), "valid_until": now - timedelta(days=1), "usage_limit": 0},
         ]
@@ -455,7 +468,7 @@ class Command(BaseCommand):
         self.stdout.write(f"  Created {len(discounts_data)} discount codes")
 
     # ------------------------------------------------------------------
-    # ORDERS
+    # ORDERS (now references variants)
     # ------------------------------------------------------------------
     def _create_orders(self, users, products):
         from orders.models import Order, OrderItem, Payment
@@ -466,16 +479,29 @@ class Command(BaseCommand):
         payment_methods = ["upi", "card", "cod", "wallet", "netbanking"]
 
         orders_created = 0
-        for i, user in enumerate(users[:4]):  # First 4 users get orders
+        for i, user in enumerate(users[:4]):
             num_orders = random.randint(1, 3)
             for j in range(num_orders):
                 order_products = random.sample(products, random.randint(1, 4))
-                subtotal = sum(p.effective_price * random.randint(1, 2) for p in order_products)
-                status = random.choice(statuses)
+                # Pick a random variant for each product
+                order_variants = []
+                for p in order_products:
+                    variant = p.variants.order_by("?").first()
+                    if variant:
+                        order_variants.append((p, variant))
+
+                if not order_variants:
+                    continue
+
+                subtotal = sum(
+                    v.effective_price * random.randint(1, 2)
+                    for _, v in order_variants
+                )
+                order_status = random.choice(statuses)
 
                 order = Order.objects.create(
                     user=user,
-                    status=status,
+                    status=order_status,
                     subtotal=subtotal,
                     discount_amount=Decimal("0.00"),
                     total_amount=subtotal,
@@ -485,23 +511,23 @@ class Command(BaseCommand):
                     shipping_pincode=user.pincode or "400001",
                     shipping_phone=user.phone or "9876543210",
                 )
-                # Backdate some orders
                 Order.objects.filter(pk=order.pk).update(
                     created_at=now - timedelta(days=random.randint(1, 60))
                 )
 
-                for product in order_products:
+                for product, variant in order_variants:
                     qty = random.randint(1, 2)
                     OrderItem.objects.create(
                         order=order,
                         product=product,
+                        variant=variant,
                         product_name=product.name,
+                        quantity_ml=variant.quantity_ml,
                         quantity=qty,
-                        price_at_purchase=product.effective_price,
+                        price_at_purchase=variant.effective_price,
                     )
 
-                # Create payment
-                pay_status = "completed" if status in ["confirmed", "processing", "shipped", "delivered"] else "pending"
+                pay_status = "completed" if order_status in ["confirmed", "processing", "shipped", "delivered"] else "pending"
                 Payment.objects.create(
                     order=order,
                     method=random.choice(payment_methods),
@@ -545,7 +571,7 @@ class Command(BaseCommand):
                     defaults={
                         "rating": random.randint(3, 5),
                         "comment": random.choice(review_comments),
-                        "is_approved": random.choice([True, True, True, False]),  # 75% approved
+                        "is_approved": random.choice([True, True, True, False]),
                     },
                 )
                 if created:
@@ -554,22 +580,24 @@ class Command(BaseCommand):
         self.stdout.write(f"  Created {reviews_created} reviews")
 
     # ------------------------------------------------------------------
-    # CART & WISHLIST
+    # CART & WISHLIST (now uses variants)
     # ------------------------------------------------------------------
     def _create_cart_wishlist(self, users, products):
         from cart.models import Cart, CartItem, Wishlist
 
         self.stdout.write("[CART] Creating carts & wishlists...")
 
-        for user in users[:3]:  # First 3 users get active carts
+        for user in users[:3]:
             cart, _ = Cart.objects.get_or_create(user=user)
             cart_products = random.sample(products, random.randint(1, 3))
             for product in cart_products:
-                CartItem.objects.get_or_create(
-                    cart=cart,
-                    product=product,
-                    defaults={"quantity": random.randint(1, 2)},
-                )
+                variant = product.variants.order_by("?").first()
+                if variant:
+                    CartItem.objects.get_or_create(
+                        cart=cart,
+                        variant=variant,
+                        defaults={"product": product, "quantity": random.randint(1, 2)},
+                    )
 
         for user in users:
             wishlist_products = random.sample(products, random.randint(2, 5))

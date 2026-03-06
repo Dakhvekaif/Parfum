@@ -20,6 +20,17 @@ urlpatterns = [
         views.ProductImageUploadView.as_view(),
         name="product-image-upload",
     ),
+    # Admin variant management
+    path(
+        "admin/products/<int:product_id>/variants/",
+        views.AdminVariantView.as_view(),
+        name="product-variant-add",
+    ),
+    path(
+        "admin/products/<int:product_id>/variants/<int:variant_id>/",
+        views.AdminVariantView.as_view(),
+        name="product-variant-detail",
+    ),
     # Router
     path("", include(router.urls)),
 ]

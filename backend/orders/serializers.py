@@ -13,7 +13,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem
         fields = [
-            "id", "product", "product_name", "quantity",
+            "id", "product", "product_name", "quantity_ml", "quantity",
             "price_at_purchase", "line_total",
         ]
         read_only_fields = fields

@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from products.models import Product
+from products.models import Product, ProductVariant
 
 from .models import Cart, CartItem, Wishlist
 from .serializers import (
@@ -30,7 +30,7 @@ class CartView(APIView):
 
 
 class CartAddView(APIView):
-    """POST /api/cart/add/ — Add product to cart or update quantity if exists."""
+    """POST /api/cart/add/ — Add variant to cart or update quantity if exists."""
 
     permission_classes = [IsAuthenticated]
 
@@ -38,35 +38,41 @@ class CartAddView(APIView):
         serializer = CartItemWriteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        product_id = serializer.validated_data["product_id"]
+        variant_id = serializer.validated_data["variant_id"]
         quantity = serializer.validated_data["quantity"]
 
         try:
-            product = Product.objects.get(pk=product_id, is_active=True)
-        except Product.DoesNotExist:
+            variant = ProductVariant.objects.select_related("product").get(pk=variant_id)
+        except ProductVariant.DoesNotExist:
             return Response(
-                {"error": "Product not found or inactive."},
+                {"error": "Variant not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        if product.stock < quantity:
+        if not variant.product.is_active:
             return Response(
-                {"error": f"Only {product.stock} items in stock."},
+                {"error": "Product is not available."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if variant.stock < quantity:
+            return Response(
+                {"error": f"Only {variant.stock} items in stock for {variant.quantity_ml}ml."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         cart, _ = Cart.objects.get_or_create(user=request.user)
         cart_item, created = CartItem.objects.get_or_create(
             cart=cart,
-            product=product,
-            defaults={"quantity": quantity},
+            variant=variant,
+            defaults={"product": variant.product, "quantity": quantity},
         )
 
         if not created:
             cart_item.quantity += quantity
-            if cart_item.quantity > product.stock:
+            if cart_item.quantity > variant.stock:
                 return Response(
-                    {"error": f"Cannot add more. Only {product.stock} in stock."},
+                    {"error": f"Cannot add more. Only {variant.stock} in stock for {variant.quantity_ml}ml."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             cart_item.save()
@@ -81,7 +87,7 @@ class CartUpdateView(APIView):
 
     def put(self, request, item_id):
         try:
-            cart_item = CartItem.objects.get(
+            cart_item = CartItem.objects.select_related("variant").get(
                 pk=item_id, cart__user=request.user
             )
         except CartItem.DoesNotExist:
@@ -98,9 +104,9 @@ class CartUpdateView(APIView):
             )
 
         quantity = int(quantity)
-        if quantity > cart_item.product.stock:
+        if quantity > cart_item.variant.stock:
             return Response(
-                {"error": f"Only {cart_item.product.stock} items in stock."},
+                {"error": f"Only {cart_item.variant.stock} items in stock."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -156,7 +162,7 @@ class WishlistView(generics.ListAPIView):
     def get_queryset(self):
         return Wishlist.objects.filter(user=self.request.user).select_related(
             "product__category"
-        ).prefetch_related("product__images")
+        ).prefetch_related("product__images", "product__variants")
 
 
 class WishlistToggleView(APIView):

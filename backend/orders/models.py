@@ -92,8 +92,16 @@ class OrderItem(models.Model):
         on_delete=models.PROTECT,
         related_name="order_items",
     )
+    variant = models.ForeignKey(
+        "products.ProductVariant",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="order_items",
+    )
     # Snapshot fields — preserved from time of purchase
     product_name = models.CharField(max_length=200)
+    quantity_ml = models.PositiveIntegerField(default=0, help_text="ML size at time of purchase")
     quantity = models.PositiveIntegerField()
     price_at_purchase = models.DecimalField(max_digits=10, decimal_places=2)
 
@@ -101,7 +109,7 @@ class OrderItem(models.Model):
         ordering = ["id"]
 
     def __str__(self):
-        return f"{self.quantity}x {self.product_name} @ ₹{self.price_at_purchase}"
+        return f"{self.quantity}x {self.product_name} ({self.quantity_ml}ml) @ Rs.{self.price_at_purchase}"
 
     @property
     def line_total(self):

@@ -1,5 +1,5 @@
 """
-Product models: Category, Collection, Product, ProductImage.
+Product models: Category, Collection, Product, ProductVariant, ProductImage.
 """
 
 from django.db import models
@@ -7,7 +7,7 @@ from django.utils.text import slugify
 
 
 class Category(models.Model):
-    """Product categories like 'Eau de Parfum', 'Body Mist', etc."""
+    """Product categories like 'Men', 'Women', 'Unisex'."""
 
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(max_length=120, unique=True, blank=True)
@@ -29,7 +29,7 @@ class Category(models.Model):
 
 
 class Collection(models.Model):
-    """Curated product groups like 'Summer Collection', 'Best Sellers'."""
+    """Curated product groups like 'Indian Products', 'Swiss Products'."""
 
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(max_length=120, unique=True, blank=True)
@@ -52,21 +52,11 @@ class Collection(models.Model):
 
 
 class Product(models.Model):
-    """Core product model with pricing, stock, categorization."""
+    """Core product — name, description, category. Pricing lives in variants."""
 
     name = models.CharField(max_length=200, db_index=True)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
     description = models.TextField()
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    discount_price = models.DecimalField(
-        max_digits=10, decimal_places=2, blank=True, null=True,
-        help_text="Leave blank if no discount",
-    )
-    stock = models.PositiveIntegerField(default=0)
-    quantity_ml = models.PositiveIntegerField(
-        default=100,
-        help_text="Bottle size in millilitres (e.g. 30, 50, 100)",
-    )
     avg_rating = models.DecimalField(
         max_digits=3, decimal_places=2, default=0.00,
     )
@@ -91,7 +81,6 @@ class Product(models.Model):
     class Meta:
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["price"]),
             models.Index(fields=["-created_at"]),
             models.Index(fields=["category", "is_active"]),
         ]
@@ -111,6 +100,45 @@ class Product(models.Model):
         return self.name
 
     @property
+    def starting_price(self):
+        """Returns the lowest effective price across all variants (for listings)."""
+        variant = self.variants.order_by("price").first()
+        if variant:
+            return variant.effective_price
+        return None
+
+    @property
+    def in_stock(self):
+        """True if any variant has stock."""
+        return self.variants.filter(stock__gt=0).exists()
+
+
+class ProductVariant(models.Model):
+    """Size/ML variant with its own price and stock."""
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="variants",
+    )
+    quantity_ml = models.PositiveIntegerField(
+        help_text="Bottle size in millilitres (e.g. 10, 30, 50)",
+    )
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    discount_price = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True,
+        help_text="Leave blank if no discount",
+    )
+    stock = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["quantity_ml"]
+        unique_together = ("product", "quantity_ml")
+
+    def __str__(self):
+        return f"{self.product.name} — {self.quantity_ml}ml (Rs.{self.effective_price})"
+
+    @property
     def effective_price(self):
         """Returns the discount price if available, else regular price."""
         return self.discount_price if self.discount_price else self.price
@@ -128,7 +156,7 @@ class Product(models.Model):
 
 
 class ProductImage(models.Model):
-    """Multiple images per product, one marked as primary."""
+    """Multiple images per product. Image with sort_order 0 is the main image."""
 
     product = models.ForeignKey(
         Product,

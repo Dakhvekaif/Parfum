@@ -140,25 +140,25 @@ GET /api/products/
 | `collection` | `?collection=best-sellers` | Filter by collection |
 | `min_price` | `?min_price=1000` | Minimum price |
 | `max_price` | `?max_price=5000` | Maximum price |
-| `ordering` | `?ordering=-price` | Sort: `price`, `-price`, `name`, `-created_at`, `avg_rating` |
+| `ordering` | `?ordering=name` | Sort: `name`, `-created_at`, `avg_rating` |
 | `page` | `?page=2` | Pagination (20 per page) |
 
 **Each product returns:**
 ```json
 {
     "id": 1,
-    "name": "Swiss Aroma Noir",
-    "slug": "swiss-aroma-noir",
-    "price": "2999.00",
-    "discount_price": "2499.00",
-    "effective_price": "2499.00",
-    "discount_percentage": 17,
-    "stock": 50,
-    "quantity_ml": 100,
+    "name": "Alpine Noir EDP",
+    "slug": "alpine-noir-edp",
+    "starting_price": "999.00",
     "in_stock": true,
     "avg_rating": "4.50",
-    "category": { "id": 1, "name": "Eau de Parfum", "slug": "eau-de-parfum" },
-    "primary_image": "https://...",
+    "category": { "id": 1, "name": "Men", "slug": "men" },
+    "primary_image": { "id": 1, "image": "https://...", "alt_text": "...", "sort_order": 0 },
+    "variants": [
+        { "id": 1, "quantity_ml": 10, "price": "999.00", "discount_price": null, "effective_price": "999.00", "discount_percentage": 0, "stock": 40, "in_stock": true },
+        { "id": 2, "quantity_ml": 30, "price": "2499.00", "discount_price": null, "effective_price": "2499.00", "discount_percentage": 0, "stock": 25, "in_stock": true },
+        { "id": 3, "quantity_ml": 50, "price": "3499.00", "discount_price": "2999.00", "effective_price": "2999.00", "discount_percentage": 14, "stock": 15, "in_stock": true }
+    ],
     "created_at": "2026-01-15T10:00:00Z"
 }
 ```
@@ -167,7 +167,7 @@ GET /api/products/
 ```
 GET /api/products/{slug}/
 ```
-Returns full product with `images[]`, `collections[]`, `description`, `quantity_ml`
+Returns full product with `images[]`, `variants[]`, `collections[]`, `description`
 
 ### Categories
 ```
@@ -202,9 +202,9 @@ Returns: `items[]` with product details, `total_items`, `total_price`
 POST /api/cart/add/
 ```
 ```json
-{ "product_id": 1, "quantity": 1 }
+{ "variant_id": 3, "quantity": 1 }
 ```
-> If product is already in cart, quantity gets incremented.
+> Uses `variant_id` (specific ML size), NOT `product_id`. If variant is already in cart, quantity gets incremented.
 
 ### Update Quantity
 ```
@@ -381,19 +381,27 @@ Create / Update body:
 {
     "name": "New Perfume",
     "description": "Description here",
-    "price": "1999.00",
-    "discount_price": "1499.00",
-    "stock": 50,
-    "quantity_ml": 100,
     "category_id": 1,
     "collection_ids": [1, 2],
     "is_active": true
 }
 ```
+> Price, stock, and ML size are managed via **variants** (see below).
 
-> ⚠️ **Delete note:** If the product has existing orders, it **can't** be deleted (returns 400). Deactivate it instead by setting `"is_active": false`.
+> Delete note: If the product has existing orders, it **can't** be deleted (returns 400). Deactivate it instead by setting `"is_active": false`.
 
-### 🖼️ Product Image Upload
+### Product Variants (ML Sizes)
+```
+POST   /api/admin/products/{product_id}/variants/              # Add variant
+PUT    /api/admin/products/{product_id}/variants/{variant_id}/  # Update variant
+DELETE /api/admin/products/{product_id}/variants/{variant_id}/  # Delete variant
+```
+```json
+{ "quantity_ml": 50, "price": "2999.00", "discount_price": "2499.00", "stock": 30 }
+```
+> Each product can have multiple ML variants (e.g. 10ml, 30ml, 50ml), each with its own price and stock.
+
+### Product Image Upload
 ```
 POST   /api/admin/products/{product_id}/images/       # Upload image
 DELETE /api/admin/products/{product_id}/images/?image_id=1   # Delete image
@@ -401,7 +409,7 @@ DELETE /api/admin/products/{product_id}/images/?image_id=1   # Delete image
 **Upload as `multipart/form-data`**, NOT JSON:
 - `image`: the image file
 - `alt_text`: description (string, optional)
-- `is_primary`: `true` or `false` (optional — first image is auto-set as primary)
+- Image with `sort_order: 0` is the main image (auto-assigned)
 
 ---
 
