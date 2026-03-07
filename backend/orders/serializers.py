@@ -24,6 +24,7 @@ class PaymentSerializer(serializers.ModelSerializer):
         model = Payment
         fields = [
             "id", "method", "transaction_id", "amount",
+            "razorpay_order_id", "razorpay_payment_id",
             "status", "paid_at", "created_at",
         ]
         read_only_fields = ["id", "created_at"]
@@ -69,7 +70,7 @@ class OrderListSerializer(serializers.ModelSerializer):
 
 
 class CheckoutSerializer(serializers.Serializer):
-    """Checkout from cart → order."""
+    """Checkout from cart -> order."""
 
     shipping_name = serializers.CharField(max_length=200)
     shipping_address = serializers.CharField()
@@ -78,6 +79,14 @@ class CheckoutSerializer(serializers.Serializer):
     shipping_phone = serializers.CharField(max_length=15)
     payment_method = serializers.ChoiceField(choices=Payment.Method.choices)
     discount_code = serializers.CharField(max_length=50, required=False, allow_blank=True)
+
+
+class RazorpayVerifySerializer(serializers.Serializer):
+    """Verify Razorpay payment signature after frontend popup."""
+
+    razorpay_payment_id = serializers.CharField(max_length=100)
+    razorpay_order_id = serializers.CharField(max_length=100)
+    razorpay_signature = serializers.CharField(max_length=300)
 
 
 class OrderStatusUpdateSerializer(serializers.Serializer):

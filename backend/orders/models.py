@@ -113,6 +113,8 @@ class OrderItem(models.Model):
 
     @property
     def line_total(self):
+        if self.price_at_purchase is None or self.quantity is None:
+            return 0
         return self.price_at_purchase * self.quantity
 
 
@@ -140,6 +142,19 @@ class Payment(models.Model):
     method = models.CharField(max_length=15, choices=Method.choices)
     transaction_id = models.CharField(
         max_length=200, blank=True, unique=True, null=True,
+    )
+    # Razorpay-specific fields
+    razorpay_order_id = models.CharField(
+        max_length=100, blank=True, null=True, unique=True,
+        help_text="Razorpay order ID (order_xxxxxxxx)",
+    )
+    razorpay_payment_id = models.CharField(
+        max_length=100, blank=True, null=True,
+        help_text="Razorpay payment ID (pay_xxxxxxxx)",
+    )
+    razorpay_signature = models.CharField(
+        max_length=300, blank=True, null=True,
+        help_text="Razorpay HMAC signature for verification",
     )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(

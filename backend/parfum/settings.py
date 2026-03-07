@@ -211,6 +211,12 @@ MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # =============================================================================
+# RAZORPAY PAYMENT GATEWAY
+# =============================================================================
+RAZORPAY_KEY_ID = config("RAZORPAY_KEY_ID", default="")
+RAZORPAY_KEY_SECRET = config("RAZORPAY_KEY_SECRET", default="")
+
+# =============================================================================
 # SECURITY HEADERS
 # =============================================================================
 SECURE_CONTENT_TYPE_NOSNIFF = True

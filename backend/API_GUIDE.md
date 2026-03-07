@@ -276,9 +276,9 @@ POST /api/wishlist/toggle/
 ---
 ---
 
-## 📦 ORDERS 🔒
+## 📦 ORDERS & PAYMENTS 🔒
 
-### Checkout (Cart → Order)
+### Step 1: Checkout (Cart → Order)
 ```
 POST /api/orders/checkout/
 ```
@@ -293,10 +293,83 @@ POST /api/orders/checkout/
   "discount_code": "WELCOME10"
 }
 ```
-> `payment_method` options: `upi`, `card`, `cod`, `wallet`, `netbanking`  
+> `payment_method` options: `upi`, `card`, `cod`, `wallet`, `netbanking`
 > `discount_code` is optional — leave blank or omit if no coupon.
 
-**Response:** Full order object with `items[]`, `payment`, totals.
+**Response for online payments (UPI/card/wallet/netbanking):**
+```json
+{
+  "id": 5,
+  "order_number": "...",
+  "total_amount": "2999.00",
+  "razorpay_order_id": "order_xxxxxxx",
+  "razorpay_key_id": "rzp_test_xxxxxxx",
+  "amount_paise": 299900,
+  "currency": "INR",
+  "items": [...],
+  "payment": { "status": "pending", "razorpay_order_id": "order_xxxxxxx" }
+}
+```
+
+**Response for COD:** Same order object but WITHOUT `razorpay_*` fields (no popup needed).
+
+---
+
+### Step 2: Open Razorpay Popup (Frontend)
+After checkout returns `razorpay_order_id` and `razorpay_key_id`, open the Razorpay popup:
+```javascript
+// Add <script src="https://checkout.razorpay.com/v1/checkout.js"></script> to your HTML
+
+const options = {
+  key: response.razorpay_key_id,         // from checkout response
+  amount: response.amount_paise,          // in paise
+  currency: response.currency,            // "INR"
+  order_id: response.razorpay_order_id,   // from checkout response
+  name: "Parfum",
+  description: "Order Payment",
+  handler: function (paymentResponse) {
+    // paymentResponse has: razorpay_payment_id, razorpay_order_id, razorpay_signature
+    // Send these to Step 3 (verify-payment)
+    verifyPayment(response.id, paymentResponse);
+  },
+  prefill: {
+    name: "Rahul Sharma",
+    email: "rahul@example.com",
+    contact: "9876543210"
+  },
+  theme: { color: "#000000" }
+};
+const rzp = new Razorpay(options);
+rzp.open();
+```
+
+---
+
+### Step 3: Verify Payment (After Popup)
+```
+POST /api/orders/{order_id}/verify-payment/
+```
+```json
+{
+  "razorpay_payment_id": "pay_xxxxxxxx",
+  "razorpay_order_id": "order_xxxxxxxx",
+  "razorpay_signature": "xxxxxxxxxxxxxxx"
+}
+```
+> All 3 values come from Razorpay popup's `handler` callback.
+
+**Response (success):**
+```json
+{
+  "message": "Payment verified successfully!",
+  "order": { "id": 5, "status": "confirmed", "payment": { "status": "completed" } }
+}
+```
+
+**Response (invalid signature):**
+```json
+{ "error": "Payment verification failed — invalid signature." }
+```
 
 ---
 
@@ -307,7 +380,7 @@ GET /api/orders/
 **Response:**
 ```json
 [
-  { "id": 1, "order_number": "ORD-0001", "status": "delivered", "status_display": "Delivered", "total_amount": "2999.00", "item_count": 2, "created_at": "..." }
+  { "id": 1, "order_number": "...", "status": "confirmed", "status_display": "Confirmed", "total_amount": "2999.00", "item_count": 2, "created_at": "..." }
 ]
 ```
 
@@ -321,7 +394,7 @@ GET /api/orders/{id}/
 
 ---
 
-### Record Payment
+### Record Payment (Manual/COD)
 ```
 POST /api/orders/{order_id}/payment/
 ```
