@@ -81,6 +81,20 @@ class CheckoutSerializer(serializers.Serializer):
     discount_code = serializers.CharField(max_length=50, required=False, allow_blank=True)
 
 
+class BuyNowSerializer(serializers.Serializer):
+    """Buy Now — direct single-product checkout (skips cart)."""
+
+    variant_id = serializers.IntegerField()
+    quantity = serializers.IntegerField(min_value=1, default=1)
+    shipping_name = serializers.CharField(max_length=200)
+    shipping_address = serializers.CharField()
+    shipping_city = serializers.CharField(max_length=100)
+    shipping_pincode = serializers.CharField(max_length=10)
+    shipping_phone = serializers.CharField(max_length=15)
+    payment_method = serializers.ChoiceField(choices=Payment.Method.choices)
+    discount_code = serializers.CharField(max_length=50, required=False, allow_blank=True)
+
+
 class RazorpayVerifySerializer(serializers.Serializer):
     """Verify Razorpay payment signature after frontend popup."""
 

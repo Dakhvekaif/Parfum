@@ -315,6 +315,28 @@ POST /api/orders/checkout/
 
 ---
 
+### Buy Now (Direct Single-Product Checkout) 🔒
+```
+POST /api/orders/buy-now/
+```
+```json
+{
+  "variant_id": 3,
+  "quantity": 1,
+  "shipping_name": "Rahul Sharma",
+  "shipping_address": "12 MG Road, Bandra West",
+  "shipping_city": "Mumbai",
+  "shipping_pincode": "400001",
+  "shipping_phone": "9876543210",
+  "payment_method": "upi"
+}
+```
+> **Skips cart entirely** — creates a single-item order directly.
+> Response is identical to checkout (includes `razorpay_*` fields for online payments).
+> Use this for the "Buy Now" button on the product page.
+
+---
+
 ### Step 2: Open Razorpay Popup (Frontend)
 After checkout returns `razorpay_order_id` and `razorpay_key_id`, open the Razorpay popup:
 ```javascript
@@ -369,6 +391,27 @@ POST /api/orders/{order_id}/verify-payment/
 **Response (invalid signature):**
 ```json
 { "error": "Payment verification failed — invalid signature." }
+```
+
+### Step 4: What to Show on Frontend After Payment
+
+**If verify-payment returns 200 (success):**
+- Show **"Payment Successful! 🎉"** page
+- Display order details from `response.order`: order number, items, total, status
+- Redirect to order history or a "Thank You" page
+
+**If verify-payment returns 400 (failed):**
+- Show **"Payment Failed"** message
+- Let user retry — their cart/order is still there
+
+**If user closes Razorpay popup without paying:**
+- No need to call verify-payment
+- The order stays as `"pending"` — user can retry later
+- For checkout flow: cart items are preserved (not cleared until payment succeeds)
+
+**Order lifecycle after payment:**
+```
+pending → confirmed (auto, on payment) → shipped (admin) → delivered (admin)
 ```
 
 ---

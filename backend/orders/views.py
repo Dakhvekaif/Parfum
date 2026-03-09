@@ -21,6 +21,7 @@ from parfum.permissions import IsAdmin
 
 from .models import Order, OrderItem, Payment
 from .serializers import (
+    BuyNowSerializer,
     CheckoutSerializer,
     OrderListSerializer,
     OrderSerializer,
@@ -204,6 +205,152 @@ class CheckoutView(APIView):
 
         if not is_cod and razorpay_order_id:
             # Frontend needs these to open Razorpay checkout popup
+            response_data["razorpay_order_id"] = razorpay_order_id
+            response_data["razorpay_key_id"] = settings.RAZORPAY_KEY_ID
+            response_data["amount_paise"] = int(total_amount * 100)
+            response_data["currency"] = "INR"
+
+        return Response(response_data, status=status.HTTP_201_CREATED)
+
+
+class BuyNowView(APIView):
+    """
+    POST /api/orders/buy-now/ — Direct single-product checkout.
+
+    Skips cart entirely. Frontend sends variant_id + quantity + shipping.
+    Returns same response as CheckoutView (with Razorpay details for online).
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request):
+        serializer = BuyNowSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        # ── Get variant ──
+        from products.models import ProductVariant
+
+        try:
+            variant = ProductVariant.objects.select_related("product").get(
+                pk=data["variant_id"]
+            )
+        except ProductVariant.DoesNotExist:
+            return Response(
+                {"error": "Product variant not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        product = variant.product
+        quantity = data["quantity"]
+
+        # ── Validate ──
+        if not product.is_active:
+            return Response(
+                {"error": f"{product.name} is no longer available."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if quantity > variant.stock:
+            return Response(
+                {"error": f"{product.name} ({variant.quantity_ml}ml): "
+                          f"only {variant.stock} in stock (requested {quantity})"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # ── Calculate totals ──
+        subtotal = variant.effective_price * quantity
+        discount_amount = 0
+        discount_obj = None
+
+        discount_code = data.get("discount_code", "").strip()
+        if discount_code:
+            try:
+                discount_obj = Discount.objects.get(code__iexact=discount_code)
+                if not discount_obj.is_valid:
+                    return Response(
+                        {"error": "Discount code is expired or invalid."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                discount_amount = discount_obj.calculate_discount(subtotal)
+            except Discount.DoesNotExist:
+                return Response(
+                    {"error": "Invalid discount code."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        total_amount = subtotal - discount_amount
+        is_cod = data["payment_method"] == Payment.Method.COD
+
+        # ── Create Razorpay order (online payments only) ──
+        razorpay_order_id = None
+        if not is_cod:
+            if not razorpay_client:
+                return Response(
+                    {"error": "Online payments are not configured. Please use COD."},
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE,
+                )
+            try:
+                rz_order = razorpay_client.order.create({
+                    "amount": int(total_amount * 100),
+                    "currency": "INR",
+                    "receipt": f"buynow_{request.user.pk}_{timezone.now().strftime('%Y%m%d%H%M%S')}",
+                    "payment_capture": 1,
+                })
+                razorpay_order_id = rz_order["id"]
+            except Exception as e:
+                logger.error(f"Razorpay order creation failed: {e}")
+                return Response(
+                    {"error": "Payment gateway error. Please try again."},
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
+
+        # ── Create order ──
+        order = Order.objects.create(
+            user=request.user,
+            subtotal=subtotal,
+            discount_amount=discount_amount,
+            total_amount=total_amount,
+            shipping_name=data["shipping_name"],
+            shipping_address=data["shipping_address"],
+            shipping_city=data["shipping_city"],
+            shipping_pincode=data["shipping_pincode"],
+            shipping_phone=data["shipping_phone"],
+            discount_code=discount_obj,
+            status=Order.Status.PENDING,
+        )
+
+        # ── Create single order item & deduct stock ──
+        OrderItem.objects.create(
+            order=order,
+            product=product,
+            variant=variant,
+            product_name=product.name,
+            quantity_ml=variant.quantity_ml,
+            quantity=quantity,
+            price_at_purchase=variant.effective_price,
+        )
+        variant.stock -= quantity
+        variant.save(update_fields=["stock"])
+
+        # ── Create payment record ──
+        Payment.objects.create(
+            order=order,
+            method=data["payment_method"],
+            amount=total_amount,
+            status=Payment.Status.PENDING,
+            razorpay_order_id=razorpay_order_id,
+        )
+
+        # ── Update discount usage ──
+        if discount_obj:
+            discount_obj.times_used += 1
+            discount_obj.save(update_fields=["times_used"])
+
+        # ── Build response ──
+        response_data = OrderSerializer(order).data
+
+        if not is_cod and razorpay_order_id:
             response_data["razorpay_order_id"] = razorpay_order_id
             response_data["razorpay_key_id"] = settings.RAZORPAY_KEY_ID
             response_data["amount_paise"] = int(total_amount * 100)

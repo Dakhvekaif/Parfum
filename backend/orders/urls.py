@@ -5,6 +5,7 @@ from . import views
 urlpatterns = [
     # Customer
     path("orders/checkout/", views.CheckoutView.as_view(), name="checkout"),
+    path("orders/buy-now/", views.BuyNowView.as_view(), name="buy-now"),
     path("orders/", views.OrderListView.as_view(), name="order-list"),
     path("orders/<int:pk>/", views.OrderDetailView.as_view(), name="order-detail"),
     path("orders/<int:order_id>/verify-payment/", views.VerifyPaymentView.as_view(), name="verify-payment"),
