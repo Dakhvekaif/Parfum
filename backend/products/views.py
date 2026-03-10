@@ -307,41 +307,48 @@ class MigrateImagesView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        import urllib.request
-        from django.core.files.base import ContentFile
-        from products.models import Product, ProductImage
-        from products.management.commands.seed_data import PRODUCT_IMAGES
+        try:
+            import urllib.request
+            from django.core.files.base import ContentFile
+            from products.models import Product, ProductImage
+            from products.management.commands.seed_data import PRODUCT_IMAGES
 
-        ProductImage.objects.all().delete()
-        products = Product.objects.all()
-        images_created = 0
+            ProductImage.objects.all().delete()
+            products = Product.objects.all()
+            images_created = 0
 
-        for product in products:
-            urls = PRODUCT_IMAGES.get(product.name, [])
-            for sort_order, url in enumerate(urls):
-                try:
-                    req = urllib.request.Request(
-                        url,
-                        headers={'User-Agent': 'SwissAroma-Seeder/1.0'},
-                    )
-                    response = urllib.request.urlopen(req, timeout=15)
-                    image_data = response.read()
+            for product in products:
+                urls = PRODUCT_IMAGES.get(product.name, [])
+                for sort_order, url in enumerate(urls):
+                    try:
+                        req = urllib.request.Request(
+                            url,
+                            headers={'User-Agent': 'SwissAroma-Seeder/1.0'},
+                        )
+                        response = urllib.request.urlopen(req, timeout=15)
+                        image_data = response.read()
 
-                    slug = product.slug or product.name.lower().replace(' ', '-')
-                    filename = f'{slug}-{sort_order + 1}.jpg'
+                        slug = product.slug or product.name.lower().replace(' ', '-')
+                        filename = f'{slug}-{sort_order + 1}.jpg'
 
-                    product_image = ProductImage(
-                        product=product,
-                        alt_text=f'{product.name} - Image {sort_order + 1}',
-                        sort_order=sort_order,
-                    )
-                    product_image.image.save(
-                        filename,
-                        ContentFile(image_data),
-                        save=True,
-                    )
-                    images_created += 1
-                except Exception as e:
-                    pass
+                        product_image = ProductImage(
+                            product=product,
+                            alt_text=f'{product.name} - Image {sort_order + 1}',
+                            sort_order=sort_order,
+                        )
+                        product_image.image.save(
+                            filename,
+                            ContentFile(image_data),
+                            save=True,
+                        )
+                        images_created += 1
+                    except Exception as inner_e:
+                        pass
 
-        return Response({"message": f"Successfully migrated {images_created} images to Cloudinary!"})
+            return Response({"message": f"Successfully migrated {images_created} images to Cloudinary!"})
+        except Exception as e:
+            import traceback
+            return Response(
+                {"error": str(e), "traceback": traceback.format_exc()},
+                status=500
+            )
