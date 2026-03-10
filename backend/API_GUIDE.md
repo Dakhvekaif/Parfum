@@ -108,6 +108,7 @@ GET /api/products/
   "id": 1,
   "name": "Alpine Noir EDP",
   "slug": "alpine-noir-edp",
+  "inspired_by": "Our Creation Of Bdk's Vanille Leather Perfume",
   "starting_price": "999.00",
   "in_stock": true,
   "avg_rating": "4.50",
@@ -121,6 +122,14 @@ GET /api/products/
   "created_at": "2026-01-15T10:00:00Z"
 }
 ```
+
+---
+
+### New Arrivals
+```
+GET /api/products/new-arrivals/
+```
+**Response:** Same as Product List, but strictly returns active products added within the last 30 days (newest first).
 
 ---
 

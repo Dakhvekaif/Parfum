@@ -286,6 +286,26 @@
                     "response": []
                 },
                 {
+                    "name": "New Arrivals",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/products/new-arrivals/",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "products",
+                                "new-arrivals",
+                                ""
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
                     "name": "Product Details",
                     "request": {
                         "method": "GET",

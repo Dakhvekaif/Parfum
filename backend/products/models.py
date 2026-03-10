@@ -56,6 +56,11 @@ class Product(models.Model):
 
     name = models.CharField(max_length=200, db_index=True)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
+    inspired_by = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="e.g. 'Our Creation Of Bdk\\'s Vanille Leather Perfume'"
+    )
     description = models.TextField()
     avg_rating = models.DecimalField(
         max_digits=3, decimal_places=2, default=0.00,

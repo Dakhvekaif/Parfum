@@ -22,7 +22,7 @@ class ProductImageInline(admin.TabularInline):
 class ProductAdmin(admin.ModelAdmin):
     list_display = ["name", "category", "avg_rating", "is_active", "created_at"]
     list_filter = ["is_active", "category", "collections", "created_at"]
-    search_fields = ["name", "description"]
+    search_fields = ["name", "inspired_by", "description"]
     prepopulated_fields = {"slug": ("name",)}
     inlines = [ProductVariantInline, ProductImageInline]
     list_editable = ["is_active"]

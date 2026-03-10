@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "django_filters",
+    "cloudinary",
+    "cloudinary_storage",
     # Local apps
     "accounts.apps.AccountsConfig",
     "products.apps.ProductsConfig",
@@ -200,11 +202,20 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # WhiteNoise — compressed, cached static files in production
 STORAGES = {
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
+}
+
+# =============================================================================
+# CLOUDINARY CONFIGURATION
+# =============================================================================
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": config("CLOUDINARY_CLOUD_NAME", default=""),
+    "API_KEY": config("CLOUDINARY_API_KEY", default=""),
+    "API_SECRET": config("CLOUDINARY_API_SECRET", default=""),
 }
 
 MEDIA_URL = "media/"

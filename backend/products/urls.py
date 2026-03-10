@@ -11,6 +11,7 @@ router.register(r"admin/collections", views.AdminCollectionViewSet, basename="ad
 urlpatterns = [
     # Public
     path("products/", views.ProductListView.as_view(), name="product-list"),
+    path("products/new-arrivals/", views.NewArrivalsListView.as_view(), name="new-arrivals"),
     path("products/<slug:slug>/", views.ProductDetailView.as_view(), name="product-detail"),
     path("categories/", views.CategoryListView.as_view(), name="category-list"),
     path("collections/", views.CollectionListView.as_view(), name="collection-list"),

@@ -30,6 +30,7 @@ def api_root(request):
             },
             "products": {
                 "list": "/api/products/",
+                "new_arrivals": "/api/products/new-arrivals/",
                 "detail": "/api/products/{slug}/",
                 "categories": "/api/categories/",
                 "collections": "/api/collections/",

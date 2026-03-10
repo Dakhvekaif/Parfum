@@ -28,6 +28,9 @@ from .serializers import (
 # ──────────────────────────────────────────────────
 
 
+from datetime import timedelta
+from django.utils import timezone
+
 class ProductListView(generics.ListAPIView):
     """GET /api/products/ — Browse active products with filtering."""
 
@@ -60,6 +63,24 @@ class ProductListView(generics.ListAPIView):
             queryset = queryset.filter(variants__price__lte=max_price).distinct()
 
         return queryset
+
+
+class NewArrivalsListView(generics.ListAPIView):
+    """GET /api/products/new-arrivals/ — Products added in the last 30 days."""
+
+    serializer_class = ProductListSerializer
+    permission_classes = [AllowAny]
+    pagination_class = None
+
+    def get_queryset(self):
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        return Product.objects.filter(
+            is_active=True,
+            created_at__gte=thirty_days_ago
+        ).select_related("category").prefetch_related(
+            "images", "variants"
+        ).order_by("-created_at")
+
 
 
 class ProductDetailView(generics.RetrieveAPIView):
