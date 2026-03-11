@@ -371,9 +371,11 @@ class Command(BaseCommand):
                     product=product,
                     quantity_ml=ml,
                     defaults={
-                        "price": Decimal(price),
-                        "discount_price": Decimal(discount) if discount else None,
-                        "stock": random.randint(*stock_range),
+                        "india_price": Decimal(price),
+                        "india_discount_price": Decimal(discount) if discount else None,
+                        "switzerland_price": Decimal(price) * Decimal('1.2'),  # Example 20% markup for Swiss
+                        "india_stock": random.randint(*stock_range),
+                        "switzerland_stock": random.randint(*stock_range),
                     },
                 )
                 if created:
@@ -494,7 +496,7 @@ class Command(BaseCommand):
                     continue
 
                 subtotal = sum(
-                    v.effective_price * random.randint(1, 2)
+                    v.india_effective_price * random.randint(1, 2)
                     for _, v in order_variants
                 )
                 order_status = random.choice(statuses)
@@ -523,8 +525,9 @@ class Command(BaseCommand):
                         variant=variant,
                         product_name=product.name,
                         quantity_ml=variant.quantity_ml,
+                        selected_origin="india",
                         quantity=qty,
-                        price_at_purchase=variant.effective_price,
+                        price_at_purchase=variant.india_effective_price,
                     )
 
                 pay_status = "completed" if order_status in ["confirmed", "processing", "shipped", "delivered"] else "pending"
