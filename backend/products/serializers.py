@@ -82,6 +82,28 @@ class ProductListSerializer(serializers.ModelSerializer):
         return None
 
 
+class NewArrivalsSerializer(serializers.ModelSerializer):
+    """Ultra-lightweight serializer for New Arrivals homepage section."""
+
+    category = CategorySerializer(read_only=True)
+    primary_image = serializers.SerializerMethodField()
+    starting_price = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Product
+        fields = [
+            "id", "name", "slug", "category",
+            "avg_rating", "starting_price", "primary_image",
+        ]
+
+    def get_primary_image(self, obj):
+        """Returns the first image by sort_order as the main image."""
+        first_image = obj.images.first()
+        if first_image:
+            return ProductImageSerializer(first_image).data
+        return None
+
+
 class ProductDetailSerializer(serializers.ModelSerializer):
     """Full product detail with all images, variants, categories, collections."""
 

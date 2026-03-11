@@ -20,6 +20,7 @@ from .serializers import (
     ProductVariantSerializer,
     ProductVariantWriteSerializer,
     ProductWriteSerializer,
+    NewArrivalsSerializer,
 )
 
 
@@ -68,7 +69,7 @@ class ProductListView(generics.ListAPIView):
 class NewArrivalsListView(generics.ListAPIView):
     """GET /api/products/new-arrivals/ — Products added in the last 30 days."""
 
-    serializer_class = ProductListSerializer
+    serializer_class = NewArrivalsSerializer
     permission_classes = [AllowAny]
     pagination_class = None
 
