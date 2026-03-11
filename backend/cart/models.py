@@ -49,19 +49,26 @@ class CartItem(models.Model):
         on_delete=models.CASCADE,
         related_name="cart_items",
     )
+    selected_origin = models.CharField(
+        max_length=20,
+        choices=[("india", "India"), ("switzerland", "Switzerland")],
+        default="india"
+    )
     quantity = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ("cart", "variant")
+        unique_together = ("cart", "variant", "selected_origin")
 
     def __str__(self):
-        return f"{self.quantity}x {self.product.name} ({self.variant.quantity_ml}ml)"
+        return f"{self.quantity}x {self.product.name} ({self.variant.quantity_ml}ml - {self.selected_origin})"
 
     @property
     def line_total(self):
-        return self.variant.effective_price * self.quantity
+        if self.selected_origin == "switzerland":
+            return self.variant.switzerland_effective_price * self.quantity
+        return self.variant.india_effective_price * self.quantity
 
 
 class Wishlist(models.Model):

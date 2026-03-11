@@ -40,6 +40,7 @@ class CartAddView(APIView):
 
         variant_id = serializer.validated_data["variant_id"]
         quantity = serializer.validated_data["quantity"]
+        selected_origin = serializer.validated_data["selected_origin"]
 
         try:
             variant = ProductVariant.objects.select_related("product").get(pk=variant_id)
@@ -55,9 +56,11 @@ class CartAddView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if variant.stock < quantity:
+        stock = variant.switzerland_stock if selected_origin == "switzerland" else variant.india_stock
+
+        if stock < quantity:
             return Response(
-                {"error": f"Only {variant.stock} items in stock for {variant.quantity_ml}ml."},
+                {"error": f"Only {stock} items in stock for {variant.quantity_ml}ml ({selected_origin})."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -65,14 +68,15 @@ class CartAddView(APIView):
         cart_item, created = CartItem.objects.get_or_create(
             cart=cart,
             variant=variant,
+            selected_origin=selected_origin,
             defaults={"product": variant.product, "quantity": quantity},
         )
 
         if not created:
             cart_item.quantity += quantity
-            if cart_item.quantity > variant.stock:
+            if cart_item.quantity > stock:
                 return Response(
-                    {"error": f"Cannot add more. Only {variant.stock} in stock for {variant.quantity_ml}ml."},
+                    {"error": f"Cannot add more. Only {stock} in stock for {variant.quantity_ml}ml ({selected_origin})."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             cart_item.save()
@@ -104,9 +108,11 @@ class CartUpdateView(APIView):
             )
 
         quantity = int(quantity)
-        if quantity > cart_item.variant.stock:
+        stock = cart_item.variant.switzerland_stock if cart_item.selected_origin == "switzerland" else cart_item.variant.india_stock
+
+        if quantity > stock:
             return Response(
-                {"error": f"Only {cart_item.variant.stock} items in stock."},
+                {"error": f"Only {stock} items in stock for {cart_item.selected_origin}."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

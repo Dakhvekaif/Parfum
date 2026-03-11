@@ -13,7 +13,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem
         fields = [
-            "id", "product", "product_name", "quantity_ml", "quantity",
+            "id", "product", "product_name", "quantity_ml", "selected_origin", "quantity",
             "price_at_purchase", "line_total",
         ]
         read_only_fields = fields
@@ -92,6 +92,10 @@ class BuyNowSerializer(serializers.Serializer):
     shipping_pincode = serializers.CharField(max_length=10)
     shipping_phone = serializers.CharField(max_length=15)
     payment_method = serializers.ChoiceField(choices=Payment.Method.choices)
+    selected_origin = serializers.ChoiceField(
+        choices=[("india", "India"), ("switzerland", "Switzerland")],
+        default="india"
+    )
     discount_code = serializers.CharField(max_length=50, required=False, allow_blank=True)
 
 

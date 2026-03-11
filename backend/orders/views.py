@@ -169,8 +169,9 @@ class CheckoutView(APIView):
                 variant=item.variant,
                 product_name=item.product.name,
                 quantity_ml=item.variant.quantity_ml,
+                selected_origin=item.selected_origin,
                 quantity=item.quantity,
-                price_at_purchase=item.variant.effective_price,
+                price_at_purchase=item.line_total / item.quantity,
             )
             item.variant.stock -= item.quantity
             item.variant.save(update_fields=["stock"])
@@ -259,7 +260,9 @@ class BuyNowView(APIView):
             )
 
         # ── Calculate totals ──
-        subtotal = variant.effective_price * quantity
+        origin = data.get("selected_origin", "india")
+        price = variant.switzerland_effective_price if origin == "switzerland" else variant.india_effective_price
+        subtotal = price * quantity
         discount_amount = 0
         discount_obj = None
 
@@ -327,8 +330,9 @@ class BuyNowView(APIView):
             variant=variant,
             product_name=product.name,
             quantity_ml=variant.quantity_ml,
+            selected_origin=origin,
             quantity=quantity,
-            price_at_purchase=variant.effective_price,
+            price_at_purchase=price,
         )
         variant.stock -= quantity
         variant.save(update_fields=["stock"])

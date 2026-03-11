@@ -10,7 +10,7 @@ from .models import Order, OrderItem, Payment
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
-    readonly_fields = ["product_name", "quantity", "price_at_purchase", "line_total"]
+    readonly_fields = ["product_name", "quantity_ml", "selected_origin", "quantity", "price_at_purchase", "line_total"]
 
 
 class PaymentInline(admin.StackedInline):

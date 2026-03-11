@@ -49,8 +49,10 @@ class DashboardView(APIView):
         total_customers = User.objects.filter(role="customer").count()
         total_products = Product.objects.filter(is_active=True).count()
         pending_orders = Order.objects.filter(status="pending").count()
+        from django.db.models import Q
         low_stock_variants = ProductVariant.objects.filter(
-            product__is_active=True, stock__lte=10
+            Q(india_stock__lte=10) | Q(switzerland_stock__lte=10),
+            product__is_active=True
         ).count()
 
         # Recent orders
@@ -134,10 +136,13 @@ class InventoryTransferCreateView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+        origin = request.data.get("origin", "india")
+        stock = variant.switzerland_stock if origin == "switzerland" else variant.india_stock
+
         # Validate stock out
-        if data["transfer_type"] == "out" and variant.stock < data["quantity"]:
+        if data["transfer_type"] == "out" and stock < data["quantity"]:
             return Response(
-                {"error": f"Insufficient stock. Current: {variant.stock} ({variant.quantity_ml}ml)."},
+                {"error": f"Insufficient stock. Current: {stock} ({variant.quantity_ml}ml - {origin})."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -147,15 +152,19 @@ class InventoryTransferCreateView(APIView):
             admin_user=request.user,
             transfer_type=data["transfer_type"],
             quantity=data["quantity"],
-            notes=data.get("notes", ""),
+            notes=f"[{origin.upper()}] {data.get('notes', '')}",
         )
 
         # Update variant stock
+        field_to_update = "switzerland_stock" if origin == "switzerland" else "india_stock"
+        current_val = getattr(variant, field_to_update)
+        
         if data["transfer_type"] == "in":
-            variant.stock += data["quantity"]
+            setattr(variant, field_to_update, current_val + data["quantity"])
         else:
-            variant.stock -= data["quantity"]
-        variant.save(update_fields=["stock"])
+            setattr(variant, field_to_update, current_val - data["quantity"])
+            
+        variant.save(update_fields=[field_to_update])
 
         return Response(
             InventoryTransferSerializer(transfer).data,

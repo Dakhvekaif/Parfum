@@ -14,9 +14,11 @@ class CartItemSerializer(serializers.ModelSerializer):
     variant = ProductVariantSerializer(read_only=True)
     line_total = serializers.ReadOnlyField()
 
+    selected_origin = serializers.CharField()
+
     class Meta:
         model = CartItem
-        fields = ["id", "product", "variant", "quantity", "line_total"]
+        fields = ["id", "product", "variant", "quantity", "line_total", "selected_origin"]
 
 
 class CartItemWriteSerializer(serializers.Serializer):
@@ -24,6 +26,10 @@ class CartItemWriteSerializer(serializers.Serializer):
 
     variant_id = serializers.IntegerField()
     quantity = serializers.IntegerField(min_value=1, default=1)
+    selected_origin = serializers.ChoiceField(
+        choices=[("india", "India"), ("switzerland", "Switzerland")],
+        default="india"
+    )
 
 
 class CartSerializer(serializers.ModelSerializer):

@@ -102,6 +102,7 @@ class OrderItem(models.Model):
     # Snapshot fields — preserved from time of purchase
     product_name = models.CharField(max_length=200)
     quantity_ml = models.PositiveIntegerField(default=0, help_text="ML size at time of purchase")
+    selected_origin = models.CharField(max_length=20, default="india", help_text="Origin selected at purchase")
     quantity = models.PositiveIntegerField()
     price_at_purchase = models.DecimalField(max_digits=10, decimal_places=2)
 

@@ -10,7 +10,11 @@ from .models import Category, Collection, Product, ProductImage, ProductVariant
 class ProductVariantInline(admin.TabularInline):
     model = ProductVariant
     extra = 1
-    fields = ["quantity_ml", "price", "discount_price", "stock"]
+    fields = [
+        "quantity_ml", 
+        "india_price", "india_discount_price", "india_stock",
+        "switzerland_price", "switzerland_discount_price", "switzerland_stock"
+    ]
 
 
 class ProductImageInline(admin.TabularInline):
@@ -43,9 +47,12 @@ class CollectionAdmin(admin.ModelAdmin):
 
 @admin.register(ProductVariant)
 class ProductVariantAdmin(admin.ModelAdmin):
-    list_display = ["product", "quantity_ml", "price", "discount_price", "stock"]
+    list_display = [
+        "product", "quantity_ml", 
+        "india_price", "india_stock", "switzerland_price", "switzerland_stock"
+    ]
     list_filter = ["product"]
-    list_editable = ["price", "discount_price", "stock"]
+    list_editable = ["india_price", "india_stock", "switzerland_price", "switzerland_stock"]
 
 
 @admin.register(ProductImage)

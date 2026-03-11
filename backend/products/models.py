@@ -107,15 +107,16 @@ class Product(models.Model):
     @property
     def starting_price(self):
         """Returns the lowest effective price across all variants (for listings)."""
-        variant = self.variants.order_by("price").first()
+        variant = self.variants.order_by("india_price").first()
         if variant:
-            return variant.effective_price
+            return variant.india_effective_price
         return None
 
     @property
     def in_stock(self):
         """True if any variant has stock."""
-        return self.variants.filter(stock__gt=0).exists()
+        from django.db.models import Q
+        return self.variants.filter(Q(india_stock__gt=0) | Q(switzerland_stock__gt=0)).exists()
 
 
 class ProductVariant(models.Model):
@@ -129,35 +130,67 @@ class ProductVariant(models.Model):
     quantity_ml = models.PositiveIntegerField(
         help_text="Bottle size in millilitres (e.g. 10, 30, 50)",
     )
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    discount_price = models.DecimalField(
-        max_digits=10, decimal_places=2, blank=True, null=True,
-        help_text="Leave blank if no discount",
+    india_price = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        default=0.00,
+        help_text="Price for India variant",
     )
-    stock = models.PositiveIntegerField(default=0)
+    india_discount_price = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True,
+        help_text="Discount price for India variant",
+    )
+    switzerland_price = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        default=0.00,
+        help_text="Price for Switzerland variant",
+    )
+    switzerland_discount_price = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True,
+        help_text="Discount price for Switzerland variant",
+    )
+    india_stock = models.PositiveIntegerField(default=0, help_text="Stock for India variant")
+    switzerland_stock = models.PositiveIntegerField(default=0, help_text="Stock for Switzerland variant")
 
     class Meta:
         ordering = ["quantity_ml"]
         unique_together = ("product", "quantity_ml")
 
     def __str__(self):
-        return f"{self.product.name} — {self.quantity_ml}ml (Rs.{self.effective_price})"
+        return f"{self.product.name} — {self.quantity_ml}ml"
+
+    # -- India Properties --
+    @property
+    def india_effective_price(self):
+        return self.india_discount_price if self.india_discount_price else self.india_price
 
     @property
-    def effective_price(self):
-        """Returns the discount price if available, else regular price."""
-        return self.discount_price if self.discount_price else self.price
+    def india_discount_percentage(self):
+        if self.india_discount_price and self.india_price > 0:
+            return round(((self.india_price - self.india_discount_price) / self.india_price) * 100)
+        return 0
+
+    # -- Switzerland Properties --
+    @property
+    def switzerland_effective_price(self):
+        return self.switzerland_discount_price if self.switzerland_discount_price else self.switzerland_price
 
     @property
-    def discount_percentage(self):
-        """Calculate discount percentage."""
-        if self.discount_price and self.price > 0:
-            return round(((self.price - self.discount_price) / self.price) * 100)
+    def switzerland_discount_percentage(self):
+        if self.switzerland_discount_price and self.switzerland_price > 0:
+            return round(((self.switzerland_price - self.switzerland_discount_price) / self.switzerland_price) * 100)
         return 0
 
     @property
     def in_stock(self):
-        return self.stock > 0
+        return self.india_stock > 0 or self.switzerland_stock > 0
+
+    @property
+    def india_in_stock(self):
+        return self.india_stock > 0
+
+    @property
+    def switzerland_in_stock(self):
+        return self.switzerland_stock > 0
 
 
 class ProductImage(models.Model):

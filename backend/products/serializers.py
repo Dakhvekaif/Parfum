@@ -37,15 +37,23 @@ class ProductImageSerializer(serializers.ModelSerializer):
 class ProductVariantSerializer(serializers.ModelSerializer):
     """Variant with size, pricing, and stock info."""
 
-    effective_price = serializers.ReadOnlyField()
-    discount_percentage = serializers.ReadOnlyField()
+    india_effective_price = serializers.ReadOnlyField()
+    india_discount_percentage = serializers.ReadOnlyField()
+    switzerland_effective_price = serializers.ReadOnlyField()
+    switzerland_discount_percentage = serializers.ReadOnlyField()
     in_stock = serializers.ReadOnlyField()
+    india_in_stock = serializers.ReadOnlyField()
+    switzerland_in_stock = serializers.ReadOnlyField()
 
     class Meta:
         model = ProductVariant
         fields = [
-            "id", "quantity_ml", "price", "discount_price",
-            "effective_price", "discount_percentage", "stock", "in_stock",
+            "id", "quantity_ml", 
+            "india_price", "india_discount_price", "india_effective_price", "india_discount_percentage",
+            "switzerland_price", "switzerland_discount_price", "switzerland_effective_price", "switzerland_discount_percentage",
+            "india_stock", "india_in_stock",
+            "switzerland_stock", "switzerland_in_stock",
+            "in_stock",
         ]
 
 
@@ -134,5 +142,7 @@ class ProductVariantWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductVariant
         fields = [
-            "id", "quantity_ml", "price", "discount_price", "stock",
+            "id", "quantity_ml", 
+            "india_price", "india_discount_price", "india_stock",
+            "switzerland_price", "switzerland_discount_price", "switzerland_stock",
         ]
