@@ -54,8 +54,10 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class OrderListSerializer(serializers.ModelSerializer):
-    """Lightweight order list."""
+    """Order list containing nested items and payment details."""
 
+    items = OrderItemSerializer(many=True, read_only=True)
+    payment = PaymentSerializer(read_only=True)
     status_display = serializers.CharField(
         source="get_status_display", read_only=True
     )
@@ -66,6 +68,7 @@ class OrderListSerializer(serializers.ModelSerializer):
         fields = [
             "id", "order_number", "status", "status_display",
             "total_amount", "item_count", "created_at",
+            "items", "payment",
         ]
 
 
