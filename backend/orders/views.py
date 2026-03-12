@@ -40,6 +40,17 @@ if settings.RAZORPAY_KEY_ID and settings.RAZORPAY_KEY_SECRET:
     )
 
 
+def _get_order_with_prefetch(order_pk):
+    """Re-fetch an order with all related data needed for serialization."""
+    return (
+        Order.objects.prefetch_related(
+            "items__product__images",
+            "items__variant",
+            "payment",
+        ).get(pk=order_pk)
+    )
+
+
 # ──────────────────────────────────────────────────
 # CUSTOMER ENDPOINTS
 # ──────────────────────────────────────────────────
@@ -83,10 +94,15 @@ class CheckoutView(APIView):
         # ── Validate stock ──
         errors = []
         for item in cart_items:
-            if item.quantity > item.variant.stock:
+            available_stock = (
+                item.variant.switzerland_stock
+                if item.selected_origin == "switzerland"
+                else item.variant.india_stock
+            )
+            if item.quantity > available_stock:
                 errors.append(
-                    f"{item.product.name} ({item.variant.quantity_ml}ml): "
-                    f"only {item.variant.stock} in stock "
+                    f"{item.product.name} ({item.variant.quantity_ml}ml - {item.selected_origin}): "
+                    f"only {available_stock} in stock "
                     f"(requested {item.quantity})"
                 )
             if not item.product.is_active:
@@ -173,8 +189,13 @@ class CheckoutView(APIView):
                 quantity=item.quantity,
                 price_at_purchase=item.line_total / item.quantity,
             )
-            item.variant.stock -= item.quantity
-            item.variant.save(update_fields=["stock"])
+            # Deduct from the correct regional stock
+            if item.selected_origin == "switzerland":
+                item.variant.switzerland_stock = max(0, item.variant.switzerland_stock - item.quantity)
+                item.variant.save(update_fields=["switzerland_stock"])
+            else:
+                item.variant.india_stock = max(0, item.variant.india_stock - item.quantity)
+                item.variant.save(update_fields=["india_stock"])
 
         # ── Create payment record ──
         payment_status = Payment.Status.PENDING
@@ -202,6 +223,7 @@ class CheckoutView(APIView):
             cart.items.all().delete()
 
         # ── Build response ──
+        order = _get_order_with_prefetch(order.pk)
         response_data = OrderSerializer(order).data
 
         if not is_cod and razorpay_order_id:
@@ -247,20 +269,23 @@ class BuyNowView(APIView):
         quantity = data["quantity"]
 
         # ── Validate ──
+        origin = data.get("selected_origin", "india")
         if not product.is_active:
             return Response(
                 {"error": f"{product.name} is no longer available."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        if quantity > variant.stock:
+        available_stock = (
+            variant.switzerland_stock if origin == "switzerland" else variant.india_stock
+        )
+        if quantity > available_stock:
             return Response(
-                {"error": f"{product.name} ({variant.quantity_ml}ml): "
-                          f"only {variant.stock} in stock (requested {quantity})"},
+                {"error": f"{product.name} ({variant.quantity_ml}ml - {origin}): "
+                          f"only {available_stock} in stock (requested {quantity})"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         # ── Calculate totals ──
-        origin = data.get("selected_origin", "india")
         price = variant.switzerland_effective_price if origin == "switzerland" else variant.india_effective_price
         subtotal = price * quantity
         discount_amount = 0
@@ -334,8 +359,13 @@ class BuyNowView(APIView):
             quantity=quantity,
             price_at_purchase=price,
         )
-        variant.stock -= quantity
-        variant.save(update_fields=["stock"])
+        # Deduct from the correct regional stock
+        if origin == "switzerland":
+            variant.switzerland_stock = max(0, variant.switzerland_stock - quantity)
+            variant.save(update_fields=["switzerland_stock"])
+        else:
+            variant.india_stock = max(0, variant.india_stock - quantity)
+            variant.save(update_fields=["india_stock"])
 
         # ── Create payment record ──
         Payment.objects.create(
@@ -352,6 +382,7 @@ class BuyNowView(APIView):
             discount_obj.save(update_fields=["times_used"])
 
         # ── Build response ──
+        order = _get_order_with_prefetch(order.pk)
         response_data = OrderSerializer(order).data
 
         if not is_cod and razorpay_order_id:
@@ -560,7 +591,10 @@ class OrderListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Order.objects.filter(user=self.request.user)
+        return (
+            Order.objects.filter(user=self.request.user)
+            .prefetch_related("items__product__images", "items__variant", "payment")
+        )
 
 
 class OrderDetailView(generics.RetrieveAPIView):
@@ -570,9 +604,10 @@ class OrderDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        qs = Order.objects.prefetch_related("items__product__images", "items__variant", "payment")
         if self.request.user.is_admin:
-            return Order.objects.all()
-        return Order.objects.filter(user=self.request.user)
+            return qs
+        return qs.filter(user=self.request.user)
 
 
 # ──────────────────────────────────────────────────
@@ -587,7 +622,9 @@ class AdminOrderListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, IsAdmin]
 
     def get_queryset(self):
-        queryset = Order.objects.all()
+        queryset = Order.objects.prefetch_related(
+            "items__product__images", "items__variant", "payment"
+        )
         status_filter = self.request.query_params.get("status")
         if status_filter:
             queryset = queryset.filter(status=status_filter)

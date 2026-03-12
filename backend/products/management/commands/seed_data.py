@@ -212,6 +212,8 @@ class Command(BaseCommand):
             {"name": "Best Sellers", "description": "Our most popular perfumes loved by thousands."},
             {"name": "Summer Essentials", "description": "Light, citrusy fragrances perfect for hot Indian summers."},
             {"name": "Wedding Collection", "description": "Luxurious fragrances for the most special day of your life."},
+            {"name": "Tester Box 5", "description": "Try before you commit — 5 hand-picked testers in 5ml sample sizes."},
+            {"name": "Tester Box 10", "description": "The ultimate sampler — 10 testers in 5ml sample sizes to explore our full range."},
         ]
 
         collections = []
@@ -236,25 +238,25 @@ class Command(BaseCommand):
                 "name": "Alpine Noir EDP",
                 "description": "A bold, mysterious blend of Swiss pine, black amber, and smoky vetiver. This intense Eau de Parfum commands attention with every step.",
                 "category": "Men",
-                "collections": ["Swiss Products", "Best Sellers"],
+                "collections": ["Swiss Products", "Best Sellers", "Tester Box 5", "Tester Box 10"],
             },
             {
                 "name": "Swiss Cedar & Vetiver",
                 "description": "Crisp Alpine cedarwood meets earthy vetiver. Notes of bergamot and white pepper add a modern edge. Perfect for the office.",
                 "category": "Men",
-                "collections": ["Swiss Products", "New Arrivals"],
+                "collections": ["Swiss Products", "New Arrivals", "Tester Box 10"],
             },
             {
                 "name": "Dark Oud Elixir",
                 "description": "A rich, opulent blend of aged Indian oud, saffron threads, and golden amber. Incredibly long-lasting.",
                 "category": "Men",
-                "collections": ["Indian Products", "Wedding Collection"],
+                "collections": ["Indian Products", "Wedding Collection", "Tester Box 5", "Tester Box 10"],
             },
             {
                 "name": "Aqua Sport Fresh",
                 "description": "An invigorating aquatic cologne with sea salt, cucumber, and driftwood. Light enough for Indian summers.",
                 "category": "Men",
-                "collections": ["Summer Essentials", "New Arrivals"],
+                "collections": ["Summer Essentials", "New Arrivals", "Tester Box 10"],
             },
 
             # ── Women (4 products) ──
@@ -262,25 +264,25 @@ class Command(BaseCommand):
                 "name": "Midnight Rose Parfum",
                 "description": "Intoxicating night-blooming Bulgarian rose layered with white musk, Turkish rose absolute, and warm vanilla base.",
                 "category": "Women",
-                "collections": ["Best Sellers", "Wedding Collection"],
+                "collections": ["Best Sellers", "Wedding Collection", "Tester Box 5", "Tester Box 10"],
             },
             {
                 "name": "Jasmine & White Tea",
                 "description": "Indian mogra jasmine with Japanese white tea and soft iris. Delicate yet long-lasting. Perfect for daytime wear.",
                 "category": "Women",
-                "collections": ["Indian Products", "New Arrivals"],
+                "collections": ["Indian Products", "New Arrivals", "Tester Box 10"],
             },
             {
                 "name": "Velvet Orchid Luxe",
                 "description": "An opulent floral-oriental masterpiece. Black orchid meets honey absolute, dark chocolate, and patchouli.",
                 "category": "Women",
-                "collections": ["Swiss Products", "Best Sellers"],
+                "collections": ["Swiss Products", "Best Sellers", "Tester Box 5", "Tester Box 10"],
             },
             {
                 "name": "Cherry Blossom Mist",
                 "description": "A playful, light body mist with Japanese cherry blossom, peach nectar, and cotton candy sweetness.",
                 "category": "Women",
-                "collections": ["Summer Essentials", "New Arrivals"],
+                "collections": ["Summer Essentials", "New Arrivals", "Tester Box 10"],
             },
 
             # ── Unisex (4 products) ──
@@ -288,7 +290,7 @@ class Command(BaseCommand):
                 "name": "Mysore Sandalwood Attar",
                 "description": "Pure, authentic Mysore sandalwood oil distilled using traditional Indian methods. Alcohol-free, 12+ hours.",
                 "category": "Unisex",
-                "collections": ["Indian Products", "Best Sellers", "Wedding Collection"],
+                "collections": ["Indian Products", "Best Sellers", "Wedding Collection", "Tester Box 10"],
             },
             {
                 "name": "Saffron & Amber Fusion",
@@ -345,20 +347,20 @@ class Command(BaseCommand):
 
         self.stdout.write("[VARIANTS] Creating product variants (10ml, 30ml, 50ml)...")
 
-        # Price tiers: {product_name: {ml: (price, discount_price_or_None)}}
+        # Price tiers: {product_name: {ml: (india_price, discount_price_or_None, switzerland_price)}}
         variant_prices = {
-            "Alpine Noir EDP":        {10: ("999.00", None), 30: ("2499.00", None), 50: ("3499.00", "2999.00")},
-            "Swiss Cedar & Vetiver":  {10: ("899.00", None), 30: ("2299.00", None), 50: ("2999.00", None)},
-            "Dark Oud Elixir":        {10: ("1499.00", None), 30: ("3999.00", None), 50: ("4999.00", "4499.00")},
-            "Aqua Sport Fresh":       {10: ("499.00", None), 30: ("1199.00", "999.00"), 50: ("1499.00", "1199.00")},
-            "Midnight Rose Parfum":   {10: ("1199.00", None), 30: ("2999.00", None), 50: ("3999.00", "3499.00")},
-            "Jasmine & White Tea":    {10: ("799.00", None), 30: ("1999.00", None), 50: ("2499.00", None)},
-            "Velvet Orchid Luxe":     {10: ("1399.00", None), 30: ("3499.00", None), 50: ("4499.00", "3999.00")},
-            "Cherry Blossom Mist":    {10: ("299.00", None), 30: ("699.00", "549.00"), 50: ("899.00", "699.00")},
-            "Mysore Sandalwood Attar": {10: ("2999.00", None), 30: ("5999.00", "5499.00"), 50: ("8999.00", None)},
-            "Saffron & Amber Fusion": {10: ("1299.00", None), 30: ("2999.00", None), 50: ("3999.00", None)},
-            "Citrus Bergamot Fresh":  {10: ("599.00", None), 30: ("1499.00", None), 50: ("1999.00", "1699.00")},
-            "Musk & Vanilla Unisex":  {10: ("699.00", None), 30: ("1799.00", None), 50: ("2299.00", None)},
+            "Alpine Noir EDP":         {5: ("249.00", None), 10: ("999.00", None), 30: ("2499.00", None), 50: ("3499.00", "2999.00")},
+            "Swiss Cedar & Vetiver":   {5: ("199.00", None), 10: ("899.00", None), 30: ("2299.00", None), 50: ("2999.00", None)},
+            "Dark Oud Elixir":         {5: ("349.00", None), 10: ("1499.00", None), 30: ("3999.00", None), 50: ("4999.00", "4499.00")},
+            "Aqua Sport Fresh":        {5: ("99.00",  None), 10: ("499.00", None), 30: ("1199.00", "999.00"), 50: ("1499.00", "1199.00")},
+            "Midnight Rose Parfum":    {5: ("299.00", None), 10: ("1199.00", None), 30: ("2999.00", None), 50: ("3999.00", "3499.00")},
+            "Jasmine & White Tea":     {5: ("179.00", None), 10: ("799.00", None), 30: ("1999.00", None), 50: ("2499.00", None)},
+            "Velvet Orchid Luxe":      {5: ("329.00", None), 10: ("1399.00", None), 30: ("3499.00", None), 50: ("4499.00", "3999.00")},
+            "Cherry Blossom Mist":     {5: ("79.00",  None), 10: ("299.00", None), 30: ("699.00", "549.00"), 50: ("899.00", "699.00")},
+            "Mysore Sandalwood Attar": {5: ("699.00", None), 10: ("2999.00", None), 30: ("5999.00", "5499.00"), 50: ("8999.00", None)},
+            "Saffron & Amber Fusion":  {5: ("299.00", None), 10: ("1299.00", None), 30: ("2999.00", None), 50: ("3999.00", None)},
+            "Citrus Bergamot Fresh":   {5: ("139.00", None), 10: ("599.00", None), 30: ("1499.00", None), 50: ("1999.00", "1699.00")},
+            "Musk & Vanilla Unisex":   {5: ("159.00", None), 10: ("699.00", None), 30: ("1799.00", None), 50: ("2299.00", None)},
         }
 
         stock_range = (20, 80)
@@ -373,7 +375,7 @@ class Command(BaseCommand):
                     defaults={
                         "india_price": Decimal(price),
                         "india_discount_price": Decimal(discount) if discount else None,
-                        "switzerland_price": Decimal(price) * Decimal('1.2'),  # Example 20% markup for Swiss
+                        "switzerland_price": Decimal(price) * Decimal('1.2'),
                         "india_stock": random.randint(*stock_range),
                         "switzerland_stock": random.randint(*stock_range),
                     },
@@ -548,6 +550,7 @@ class Command(BaseCommand):
     # REVIEWS
     # ------------------------------------------------------------------
     def _create_reviews(self, users, products):
+        from django.db.models import Avg
         from reviews.models import Review
 
         self.stdout.write("[REVIEWS] Creating reviews...")
@@ -579,6 +582,15 @@ class Command(BaseCommand):
                 )
                 if created:
                     reviews_created += 1
+
+        # Recalculate avg_rating for all products based on approved reviews
+        self.stdout.write("[REVIEWS] Recalculating product average ratings...")
+        for product in products:
+            avg = Review.objects.filter(
+                product=product, is_approved=True
+            ).aggregate(avg=Avg("rating"))["avg"]
+            product.avg_rating = avg or 0
+            product.save(update_fields=["avg_rating"])
 
         self.stdout.write(f"  Created {reviews_created} reviews")
 

@@ -104,6 +104,36 @@ class NewArrivalsSerializer(serializers.ModelSerializer):
         return None
 
 
+class TesterBoxSerializer(serializers.ModelSerializer):
+    """Serializer for tester-box collections — only exposes 5ml variants."""
+
+    category = CategorySerializer(read_only=True)
+    primary_image = serializers.SerializerMethodField()
+    variants = serializers.SerializerMethodField()
+    starting_price = serializers.ReadOnlyField()
+    in_stock = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Product
+        fields = [
+            "id", "name", "slug", "inspired_by", "starting_price",
+            "in_stock", "avg_rating", "is_active", "category",
+            "primary_image", "variants", "created_at",
+        ]
+
+    def get_primary_image(self, obj):
+        """Returns the image with sort_order=0 as the main image."""
+        first_image = obj.images.filter(sort_order=0).first()
+        if first_image:
+            return ProductImageSerializer(first_image).data
+        return None
+
+    def get_variants(self, obj):
+        """Returns only the 5ml tester variant."""
+        tester_variants = obj.variants.filter(quantity_ml=5)
+        return ProductVariantSerializer(tester_variants, many=True).data
+
+
 class ProductDetailSerializer(serializers.ModelSerializer):
     """Full product detail with all images, variants, categories, collections."""
 

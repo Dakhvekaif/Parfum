@@ -21,6 +21,7 @@ from .serializers import (
     ProductVariantWriteSerializer,
     ProductWriteSerializer,
     NewArrivalsSerializer,
+    TesterBoxSerializer,
 )
 
 
@@ -113,6 +114,36 @@ class CollectionListView(generics.ListAPIView):
     serializer_class = CollectionSerializer
     permission_classes = [AllowAny]
     pagination_class = None
+
+
+class TesterBox5ListView(generics.ListAPIView):
+    """GET /api/products/tester-box-5/ — 5-product tester sample set (5ml only)."""
+
+    serializer_class = TesterBoxSerializer
+    permission_classes = [AllowAny]
+    pagination_class = None
+
+    def get_queryset(self):
+        return (
+            Product.objects.filter(is_active=True, collections__slug="tester-box-5")
+            .select_related("category")
+            .prefetch_related("images", "variants")
+        )
+
+
+class TesterBox10ListView(generics.ListAPIView):
+    """GET /api/products/tester-box-10/ — 10-product tester sample set (5ml only)."""
+
+    serializer_class = TesterBoxSerializer
+    permission_classes = [AllowAny]
+    pagination_class = None
+
+    def get_queryset(self):
+        return (
+            Product.objects.filter(is_active=True, collections__slug="tester-box-10")
+            .select_related("category")
+            .prefetch_related("images", "variants")
+        )
 
 
 # ──────────────────────────────────────────────────

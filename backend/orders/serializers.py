@@ -9,14 +9,30 @@ from .models import Order, OrderItem, Payment
 
 class OrderItemSerializer(serializers.ModelSerializer):
     line_total = serializers.ReadOnlyField()
+    product_slug = serializers.SerializerMethodField()
+    product_image = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderItem
         fields = [
-            "id", "product", "product_name", "quantity_ml", "selected_origin", "quantity",
+            "id", "product", "product_name", "product_slug", "product_image",
+            "quantity_ml", "selected_origin", "quantity",
             "price_at_purchase", "line_total",
         ]
         read_only_fields = fields
+
+    def get_product_slug(self, obj):
+        """Returns the slug of the related product."""
+        return obj.product.slug if obj.product else None
+
+    def get_product_image(self, obj):
+        """Returns the URL of the primary image (sort_order=0) for the product."""
+        if not obj.product:
+            return None
+        img = obj.product.images.filter(sort_order=0).first()
+        if img and img.image:
+            return img.image.url
+        return None
 
 
 class PaymentSerializer(serializers.ModelSerializer):
