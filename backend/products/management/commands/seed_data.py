@@ -329,10 +329,10 @@ class Command(BaseCommand):
                 },
             )
 
-            if created:
-                for col_name in collection_names:
-                    if col_name in col_map:
-                        product.collections.add(col_map[col_name])
+            # Always sync collections (handles re-runs and manually-added products)
+            for col_name in collection_names:
+                if col_name in col_map:
+                    product.collections.add(col_map[col_name])
 
             products.append(product)
 
