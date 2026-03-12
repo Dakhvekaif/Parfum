@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "reviews.apps.ReviewsConfig",
     "discounts.apps.DiscountsConfig",
     "analytics.apps.AnalyticsConfig",
+    "contact.apps.ContactConfig",
 ]
 
 MIDDLEWARE = [
