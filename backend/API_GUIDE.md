@@ -83,6 +83,22 @@ POST /api/auth/change-password/
 ```
 
 ---
+
+### Contact Us
+```
+POST /api/contact/
+```
+```json
+{
+  "full_name": "John Doe",
+  "email": "johndoe@example.com",
+  "subject": "Question about shipping",
+  "message": "Do you ship to Switzerland?"
+}
+```
+**Response:** `201 Created` with the saved message object.
+
+---
 ---
 
 ## 🛍️ PRODUCTS (No auth needed)
@@ -130,6 +146,47 @@ GET /api/products/
 GET /api/products/new-arrivals/
 ```
 **Response:** Same as Product List, but strictly returns active products added within the last 30 days (newest first).
+
+---
+
+### Tester Boxes
+```
+GET /api/products/tester-boxes/
+```
+**Public View Response:** Returns a list of all active tester boxes (e.g., "Tester Box 5", "Tester Box 10").
+The `products` array inside each box is **automatically filtered by the backend** so that it *only contains the 5ml variant* for each product. Your frontend does not need to filter the variant sizes manually!
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Tester Box 5",
+    "slug": "tester-box-5",
+    "description": "Our curated 5-piece sample box.",
+    "created_at": "2026-03-12T10:00:00Z",
+    "products": [
+      {
+        "id": 15,
+        "name": "Midnight Rose Parfum",
+        "slug": "midnight-rose-parfum",
+        "starting_price": "499.00",
+        "category": { "id": 2, "name": "Women", "slug": "women" },
+        "primary_image": { "id": 22, "image": "...", "alt_text": "..." },
+        "variants": [
+          {
+            "id": 45,
+            "quantity_ml": 5,
+            "india_price": "499.00",
+            "india_discount_price": null,
+            "india_effective_price": "499.00",
+            "in_stock": true
+          }
+        ]
+      }
+    ]
+  }
+]
+```
 
 ---
 
@@ -521,6 +578,7 @@ These need admin auth token.
 | `PUT` | `/api/admin/reviews/{id}/approve/` | `{ "is_approved": true }` |
 | `GET` | `/api/admin/analytics/dashboard/` | Dashboard stats |
 | `GET` | `/api/admin/analytics/sales/` | Sales data (`?start_date=`, `?end_date=`) |
+| `GET/POST/PATCH/DELETE` | `/api/admin/tester-boxes/` | Manage tester box groupings |
 | `POST` | `/api/admin/inventory/transfer/` | `{ "product_id": 1, "variant_id": 3, "transfer_type": "in", "quantity": 25 }` |
 | `GET` | `/api/admin/inventory/transfers/` | Transfer history |
 

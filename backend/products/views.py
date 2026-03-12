@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 
 from parfum.permissions import IsAdmin
 
-from .models import Category, Collection, Product, ProductImage, ProductVariant
+from .models import Category, Collection, Product, ProductImage, ProductVariant, TesterBox
 from .serializers import (
     CategorySerializer,
     CollectionSerializer,
@@ -22,6 +22,7 @@ from .serializers import (
     ProductWriteSerializer,
     NewArrivalsSerializer,
     TesterBoxSerializer,
+    AdminTesterBoxWriteSerializer,
 )
 
 
@@ -116,33 +117,16 @@ class CollectionListView(generics.ListAPIView):
     pagination_class = None
 
 
-class TesterBox5ListView(generics.ListAPIView):
-    """GET /api/products/tester-box-5/ — 5-product tester sample set (5ml only)."""
+class TesterBoxListView(generics.ListAPIView):
+    """GET /api/products/tester-boxes/ — Fetch all active Tester Boxes and their 5ml variants."""
 
     serializer_class = TesterBoxSerializer
     permission_classes = [AllowAny]
     pagination_class = None
 
     def get_queryset(self):
-        return (
-            Product.objects.filter(is_active=True, collections__slug="tester-box-5")
-            .select_related("category")
-            .prefetch_related("images", "variants")
-        )
-
-
-class TesterBox10ListView(generics.ListAPIView):
-    """GET /api/products/tester-box-10/ — 10-product tester sample set (5ml only)."""
-
-    serializer_class = TesterBoxSerializer
-    permission_classes = [AllowAny]
-    pagination_class = None
-
-    def get_queryset(self):
-        return (
-            Product.objects.filter(is_active=True, collections__slug="tester-box-10")
-            .select_related("category")
-            .prefetch_related("images", "variants")
+        return TesterBox.objects.filter(is_active=True).prefetch_related(
+            "products", "products__category", "products__images", "products__variants"
         )
 
 
@@ -205,6 +189,18 @@ class AdminCollectionViewSet(viewsets.ModelViewSet):
     queryset = Collection.objects.all()
     serializer_class = CollectionSerializer
     permission_classes = [IsAuthenticated, IsAdmin]
+
+
+class AdminTesterBoxViewSet(viewsets.ModelViewSet):
+    """CRUD /api/admin/tester-boxes/ — Admin tester box management."""
+
+    permission_classes = [IsAuthenticated, IsAdmin]
+    queryset = TesterBox.objects.prefetch_related("products")
+
+    def get_serializer_class(self):
+        if self.action in ["create", "update", "partial_update"]:
+            return AdminTesterBoxWriteSerializer
+        return TesterBoxSerializer
 
 
 class AdminVariantView(APIView):

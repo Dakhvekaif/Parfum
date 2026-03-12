@@ -4,7 +4,7 @@ Product serializers with nested variants, images, categories, and collections.
 
 from rest_framework import serializers
 
-from .models import Category, Collection, Product, ProductImage, ProductVariant
+from .models import Category, Collection, Product, ProductImage, ProductVariant, TesterBox
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -104,9 +104,8 @@ class NewArrivalsSerializer(serializers.ModelSerializer):
         return None
 
 
-class TesterBoxSerializer(serializers.ModelSerializer):
-    """Serializer for tester-box collections — only exposes 5ml variants."""
-
+class TesterBoxItemSerializer(serializers.ModelSerializer):
+    """Serialize the individual products inside a TesterBox."""
     category = CategorySerializer(read_only=True)
     primary_image = serializers.SerializerMethodField()
     variants = serializers.SerializerMethodField()
@@ -122,16 +121,49 @@ class TesterBoxSerializer(serializers.ModelSerializer):
         ]
 
     def get_primary_image(self, obj):
-        """Returns the image with sort_order=0 as the main image."""
         first_image = obj.images.filter(sort_order=0).first()
         if first_image:
             return ProductImageSerializer(first_image).data
         return None
 
     def get_variants(self, obj):
-        """Returns only the 5ml tester variant."""
         tester_variants = obj.variants.filter(quantity_ml=5)
         return ProductVariantSerializer(tester_variants, many=True).data
+
+class TesterBoxSerializer(serializers.ModelSerializer):
+    """Public read-only serializer for Tester Boxes and their 5ml products."""
+    products = TesterBoxItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = TesterBox
+        fields = ["id", "name", "slug", "description", "products", "created_at"]
+        read_only_fields = ["slug", "created_at"]
+
+class AdminTesterBoxWriteSerializer(serializers.ModelSerializer):
+    """Admin writes tester boxes with related product IDs."""
+    product_ids = serializers.PrimaryKeyRelatedField(
+        queryset=Product.objects.all(), source="products",
+        many=True, required=False,
+    )
+
+    class Meta:
+        model = TesterBox
+        fields = ["id", "name", "description", "is_active", "product_ids"]
+
+    def create(self, validated_data):
+        products = validated_data.pop("products", [])
+        tester_box = TesterBox.objects.create(**validated_data)
+        tester_box.products.set(products)
+        return tester_box
+
+    def update(self, instance, validated_data):
+        products = validated_data.pop("products", None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if products is not None:
+            instance.products.set(products)
+        return instance
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):

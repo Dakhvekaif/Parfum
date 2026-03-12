@@ -4,7 +4,7 @@ Admin configuration for Products.
 
 from django.contrib import admin
 
-from .models import Category, Collection, Product, ProductImage, ProductVariant
+from .models import Category, Collection, Product, ProductImage, ProductVariant, TesterBox
 
 
 class ProductVariantInline(admin.TabularInline):
@@ -59,3 +59,10 @@ class ProductVariantAdmin(admin.ModelAdmin):
 class ProductImageAdmin(admin.ModelAdmin):
     list_display = ["product", "sort_order", "created_at"]
     list_filter = ["product"]
+
+@admin.register(TesterBox)
+class TesterBoxAdmin(admin.ModelAdmin):
+    list_display = ["name", "slug", "is_active", "created_at"]
+    list_filter = ["is_active"]
+    prepopulated_fields = {"slug": ("name",)}
+    filter_horizontal = ["products"]

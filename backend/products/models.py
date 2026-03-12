@@ -51,6 +51,34 @@ class Collection(models.Model):
         return self.name
 
 
+class TesterBox(models.Model):
+    """Admin-managed groups of products for tester boxes."""
+
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=120, unique=True, blank=True)
+    description = models.TextField(blank=True)
+    products = models.ManyToManyField(
+        "Product",
+        related_name="tester_boxes",
+        blank=True,
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name_plural = "tester boxes"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
 class Product(models.Model):
     """Core product — name, description, category. Pricing lives in variants."""
 
