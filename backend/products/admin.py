@@ -24,12 +24,12 @@ class ProductImageInline(admin.TabularInline):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ["name", "category", "avg_rating", "is_active", "created_at"]
-    list_filter = ["is_active", "category", "collections", "created_at"]
+    list_display = ["name", "category", "avg_rating", "is_active", "is_roll_on", "created_at"]
+    list_filter = ["is_active", "is_roll_on", "category", "collections", "created_at"]
     search_fields = ["name", "inspired_by", "description"]
     prepopulated_fields = {"slug": ("name",)}
     inlines = [ProductVariantInline, ProductImageInline]
-    list_editable = ["is_active"]
+    list_editable = ["is_active", "is_roll_on"]
 
 
 @admin.register(Category)

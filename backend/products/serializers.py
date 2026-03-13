@@ -70,7 +70,7 @@ class ProductListSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             "id", "name", "slug", "inspired_by", "starting_price",
-            "in_stock", "avg_rating", "is_active", "category",
+            "in_stock", "avg_rating", "is_active", "is_roll_on", "category",
             "primary_image", "variants", "created_at",
         ]
 
@@ -180,7 +180,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             "id", "name", "slug", "inspired_by", "description",
-            "starting_price", "in_stock", "avg_rating", "is_active",
+            "starting_price", "in_stock", "avg_rating", "is_active", "is_roll_on",
             "category", "collections", "images", "variants",
             "created_at", "updated_at",
         ]
@@ -200,7 +200,7 @@ class ProductWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
-            "id", "name", "inspired_by", "description", "is_active",
+            "id", "name", "inspired_by", "description", "is_active", "is_roll_on",
             "category_id", "collection_ids",
         ]
 

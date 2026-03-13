@@ -228,7 +228,33 @@ GET /api/collections/
 
 ---
 
-### 🔍 Product Search
+## 🧴 ROLL ON ATTARS (No auth needed)
+
+Roll-on attars are **separate** from the main product catalogue and **not returned** by `/api/products/`. They are always in **10ml** size.
+
+### Roll On List
+```
+GET /api/roll-ons/
+```
+**Optional query params:**
+| Param | Example | What it does |
+|-------|---------|--------------|
+| `search` | `?search=musk` | Search by name or inspired_by |
+| `ordering` | `?ordering=-avg_rating` | Sort: `name`, `-created_at`, `avg_rating` |
+
+**Response:** Array of roll-on products (same shape as Product List, with `is_roll_on: true` and a single 10ml variant).
+
+---
+
+### Roll On Detail
+```
+GET /api/roll-ons/{slug}/
+```
+**Response:** Full product detail — same as `/api/products/{slug}/`  but for a roll-on.
+
+---
+
+
 ```
 GET /api/search/?q={query}
 ```

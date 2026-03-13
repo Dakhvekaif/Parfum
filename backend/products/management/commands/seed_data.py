@@ -206,7 +206,6 @@ class Command(BaseCommand):
             {"name": "Men", "description": "Bold, confident fragrances crafted for the modern man."},
             {"name": "Women", "description": "Elegant, captivating scents designed for her."},
             {"name": "Unisex", "description": "Versatile fragrances that transcend gender."},
-            {"name": "Roll On", "description": "Alcohol-free attar roll-ons — pocket-sized luxury you apply directly to skin. Long-lasting and travel-friendly."},
         ]
 
         categories = []
@@ -335,29 +334,33 @@ class Command(BaseCommand):
                 "name": "Rose Oud Roll On",
                 "inspired_by": "Inspired by Rasasi's Dhan Al Oudh Abiyad",
                 "description": "A rich, concentrated attar roll-on blending pure Bulgarian rose with aged Indian oud. Alcohol-free, long-lasting, and perfect for daily application directly on pulse points.",
-                "category": "Roll On",
-                "collections": ["Indian Products", "Best Sellers", "Tester Box 5", "Tester Box 10"],
+                "is_roll_on": True,
+                "category": "Unisex",
+                "collections": ["Indian Products", "Best Sellers"],
             },
             {
                 "name": "Musk Amber Roll On",
                 "inspired_by": "Inspired by Swiss Arabian's Layali Rouge",
                 "description": "Sensual white musk meets warm golden amber in this silky alcohol-free roll-on. Lingers beautifully on skin for hours. Ideal for travel.",
-                "category": "Roll On",
-                "collections": ["Indian Products", "New Arrivals", "Tester Box 10"],
+                "is_roll_on": True,
+                "category": "Unisex",
+                "collections": ["Indian Products", "New Arrivals"],
             },
             {
                 "name": "Sandalwood Mogra Roll On",
                 "inspired_by": "Inspired by Ajmal's Dahn Al Oudh Moattaq",
                 "description": "Creamy Mysore sandalwood blended with fresh Indian mogra (jasmine). A classic attar combination in a convenient roll-on format. Zero alcohol, skin-safe.",
-                "category": "Roll On",
-                "collections": ["Indian Products", "Wedding Collection", "Best Sellers"],
+                "is_roll_on": True,
+                "category": "Unisex",
+                "collections": ["Indian Products", "Wedding Collection"],
             },
             {
                 "name": "Black Musk Roll On",
                 "inspired_by": "Inspired by Al Haramain's Black Musk",
                 "description": "Deep, mysterious black musk attar with smoky oud undertones and a touch of vanilla. A crowd favourite — works on all skin types and lasts all day.",
-                "category": "Roll On",
-                "collections": ["Indian Products", "New Arrivals", "Tester Box 5", "Tester Box 10"],
+                "is_roll_on": True,
+                "category": "Unisex",
+                "collections": ["Indian Products", "New Arrivals"],
             },
         ]
 
@@ -369,12 +372,14 @@ class Command(BaseCommand):
             collection_names = data.pop("collections")
             category_name = data.pop("category")
             inspired_by = data.pop("inspired_by", "")
+            is_roll_on = data.pop("is_roll_on", False)
 
             product, created = Product.objects.get_or_create(
                 name=data["name"],
                 defaults={
                     "description": data["description"],
                     "inspired_by": inspired_by,
+                    "is_roll_on": is_roll_on,
                     "category": cat_map[category_name],
                     "is_active": True,
                 },
@@ -412,11 +417,11 @@ class Command(BaseCommand):
             "Saffron & Amber Fusion":  {5: ("299.00", None), 10: ("1299.00", None), 30: ("2999.00", None), 50: ("3999.00", None)},
             "Citrus Bergamot Fresh":   {5: ("139.00", None), 10: ("599.00", None), 30: ("1499.00", None), 50: ("1999.00", "1699.00")},
             "Musk & Vanilla Unisex":   {5: ("159.00", None), 10: ("699.00", None), 30: ("1799.00", None), 50: ("2299.00", None)},
-            # Roll On attars — sold in 3ml, 6ml, 10ml roll-on sizes
-            "Rose Oud Roll On":         {3: ("199.00", None), 6: ("349.00", "299.00"), 10: ("499.00", "449.00")},
-            "Musk Amber Roll On":       {3: ("149.00", None), 6: ("279.00", None),     10: ("399.00", "349.00")},
-            "Sandalwood Mogra Roll On": {3: ("179.00", None), 6: ("329.00", "299.00"), 10: ("449.00", None)},
-            "Black Musk Roll On":       {3: ("159.00", None), 6: ("299.00", None),     10: ("429.00", "379.00")},
+            # Roll On attars — always 10ml only
+            "Rose Oud Roll On":         {10: ("499.00", "449.00")},
+            "Musk Amber Roll On":       {10: ("399.00", "349.00")},
+            "Sandalwood Mogra Roll On": {10: ("449.00", None)},
+            "Black Musk Roll On":       {10: ("429.00", "379.00")},
         }
 
         stock_range = (20, 80)

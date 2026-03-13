@@ -47,7 +47,7 @@ class ProductListView(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = (
-            Product.objects.filter(is_active=True)
+            Product.objects.filter(is_active=True, is_roll_on=False)
             .select_related("category")
             .prefetch_related("images", "variants")
         )
@@ -79,6 +79,7 @@ class NewArrivalsListView(generics.ListAPIView):
         thirty_days_ago = timezone.now() - timedelta(days=30)
         return Product.objects.filter(
             is_active=True,
+            is_roll_on=False,
             created_at__gte=thirty_days_ago
         ).select_related("category").prefetch_related(
             "images", "variants"
@@ -164,6 +165,45 @@ class ProductSearchView(generics.ListAPIView):
             "count": queryset.count(),
             "results": serializer.data,
         })
+
+
+class RollOnListView(generics.ListAPIView):
+    """
+    GET /api/roll-ons/
+    Public listing of all active roll-on attars.
+    Always 10ml. Excluded from /api/products/.
+    """
+
+    serializer_class = ProductListSerializer
+    permission_classes = [AllowAny]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["name", "inspired_by"]
+    ordering_fields = ["created_at", "avg_rating", "name"]
+    ordering = ["-created_at"]
+    pagination_class = None
+
+    def get_queryset(self):
+        return (
+            Product.objects.filter(is_active=True, is_roll_on=True)
+            .select_related("category")
+            .prefetch_related("images", "variants")
+        )
+
+
+class RollOnDetailView(generics.RetrieveAPIView):
+    """
+    GET /api/roll-ons/{slug}/
+    Full detail for a single roll-on product.
+    """
+
+    serializer_class = ProductDetailSerializer
+    permission_classes = [AllowAny]
+    lookup_field = "slug"
+
+    def get_queryset(self):
+        return Product.objects.filter(is_roll_on=True).select_related(
+            "category"
+        ).prefetch_related("collections", "images", "variants")
 
 
 # ──────────────────────────────────────────────────

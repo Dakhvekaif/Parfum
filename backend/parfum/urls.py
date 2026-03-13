@@ -36,6 +36,10 @@ def api_root(request):
                 "categories": "/api/categories/",
                 "collections": "/api/collections/",
             },
+            "roll_ons": {
+                "list": "/api/roll-ons/",
+                "detail": "/api/roll-ons/{slug}/",
+            },
             "cart": {
                 "view": "/api/cart/",
                 "add": "/api/cart/add/",

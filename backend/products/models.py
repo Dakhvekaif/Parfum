@@ -94,6 +94,10 @@ class Product(models.Model):
         max_digits=3, decimal_places=2, default=0.00,
     )
     is_active = models.BooleanField(default=True, db_index=True)
+    is_roll_on = models.BooleanField(
+        default=False, db_index=True,
+        help_text="If True, this product is a roll-on attar and will not appear in the main product listing.",
+    )
 
     # Relationships
     category = models.ForeignKey(

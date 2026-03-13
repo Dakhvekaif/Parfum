@@ -19,6 +19,8 @@ urlpatterns = [
     path("categories/", views.CategoryListView.as_view(), name="category-list"),
     path("collections/", views.CollectionListView.as_view(), name="collection-list"),
     path("search/", views.ProductSearchView.as_view(), name="product-search"),
+    path("roll-ons/", views.RollOnListView.as_view(), name="roll-on-list"),
+    path("roll-ons/<slug:slug>/", views.RollOnDetailView.as_view(), name="roll-on-detail"),
     # Admin image upload
     path(
         "admin/products/<int:product_id>/images/",
