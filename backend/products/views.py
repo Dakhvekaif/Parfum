@@ -41,7 +41,7 @@ class ProductListView(generics.ListAPIView):
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ["category__slug", "is_active"]
-    search_fields = ["name", "description"]
+    search_fields = ["name", "inspired_by"]
     ordering_fields = ["created_at", "avg_rating", "name"]
     ordering = ["-created_at"]
 
@@ -128,6 +128,42 @@ class TesterBoxListView(generics.ListAPIView):
         return TesterBox.objects.filter(is_active=True).prefetch_related(
             "products", "products__category", "products__images", "products__variants"
         )
+
+
+class ProductSearchView(generics.ListAPIView):
+    """
+    GET /api/search/?q=<query>
+    Search active products by name or inspired_by.
+    Returns full product detail (variants, images, category, collections).
+    """
+
+    serializer_class = ProductDetailSerializer
+    permission_classes = [AllowAny]
+    pagination_class = None
+
+    def get_queryset(self):
+        from django.db.models import Q
+
+        query = self.request.query_params.get("q", "").strip()
+        if not query:
+            return Product.objects.none()
+
+        return (
+            Product.objects.filter(is_active=True)
+            .filter(Q(name__icontains=query) | Q(inspired_by__icontains=query))
+            .select_related("category")
+            .prefetch_related("collections", "images", "variants")
+            .distinct()
+        )
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({
+            "query": request.query_params.get("q", "").strip(),
+            "count": queryset.count(),
+            "results": serializer.data,
+        })
 
 
 # ──────────────────────────────────────────────────

@@ -112,7 +112,7 @@ GET /api/products/
 |-------|---------|--------------|
 | `category__slug` | `?category__slug=men` | Filter by category |
 | `collection` | `?collection=best-sellers` | Filter by collection |
-| `search` | `?search=rose` | Search name & description |
+| `search` | `?search=rose` | Quick search on name & inspired_by (use `/api/search/` for full results) |
 | `min_price` | `?min_price=1000` | Min variant price |
 | `max_price` | `?max_price=3000` | Max variant price |
 | `ordering` | `?ordering=name` | Sort: `name`, `-created_at`, `avg_rating` |
@@ -224,6 +224,53 @@ GET /api/collections/
   { "id": 2, "name": "Swiss Products", "slug": "swiss-products", "product_count": 4 },
   { "id": 3, "name": "New Arrivals", "slug": "new-arrivals", "product_count": 4 }
 ]
+```
+
+---
+
+### 🔍 Product Search
+```
+GET /api/search/?q={query}
+```
+> No auth needed. Searches product `name` **and** `inspired_by` fields (case-insensitive).  
+> Returns **full product detail** — variants, images, category, collections all included.  
+> If `?q=` is empty or missing → returns `count: 0, results: []`.
+
+**Examples:**
+```
+GET /api/search/?q=oud
+GET /api/search/?q=creed
+GET /api/search/?q=vanilla leather
+```
+
+**Response:**
+```json
+{
+  "query": "oud",
+  "count": 2,
+  "results": [
+    {
+      "id": 1,
+      "name": "Alpine Noir EDP",
+      "slug": "alpine-noir-edp",
+      "inspired_by": "Our Creation Of Creed's Royal Oud",
+      "description": "...",
+      "starting_price": "999.00",
+      "in_stock": true,
+      "avg_rating": "4.50",
+      "category": { "id": 1, "name": "Men", "slug": "men" },
+      "collections": [ { "id": 1, "name": "Indian Products", "slug": "indian-products" } ],
+      "images": [
+        { "id": 1, "image": "https://...", "alt_text": "Alpine Noir", "sort_order": 0 }
+      ],
+      "variants": [
+        { "id": 1, "quantity_ml": 10, "india_price": "999.00", "india_discount_price": null, "india_effective_price": "999.00", "india_discount_percentage": 0, "india_stock": 40, "india_in_stock": true, "switzerland_price": "15.00", "switzerland_effective_price": "15.00", "switzerland_stock": 10, "switzerland_in_stock": true, "in_stock": true }
+      ],
+      "created_at": "2026-01-15T10:00:00Z",
+      "updated_at": "2026-02-01T08:00:00Z"
+    }
+  ]
+}
 ```
 
 ---
