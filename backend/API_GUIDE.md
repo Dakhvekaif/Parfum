@@ -113,8 +113,8 @@ GET /api/products/
 | `category__slug` | `?category__slug=men` | Filter by category |
 | `collection` | `?collection=best-sellers` | Filter by collection |
 | `search` | `?search=rose` | Quick search on name & inspired_by (use `/api/search/` for full results) |
-| `min_price` | `?min_price=1000` | Min variant price |
-| `max_price` | `?max_price=3000` | Max variant price |
+| `min_price` | `?min_price=1000` | Products with at least one variant ≥ ₹1000 |
+| `max_price` | `?max_price=3000` | Products with at least one variant ≤ ₹3000 |
 | `ordering` | `?ordering=name` | Sort: `name`, `-created_at`, `avg_rating` |
 | `page` | `?page=2` | Pagination (20/page) |
 
@@ -260,13 +260,21 @@ GET /api/search/?q={query}
 ```
 > No auth needed. Searches product `name` **and** `inspired_by` fields (case-insensitive).  
 > Returns **full product detail** — variants, images, category, collections all included.  
-> If `?q=` is empty or missing → returns `count: 0, results: []`.
+> All params are optional — you can use price filters alone without a text query.
+
+**Query params:**
+| Param | Example | What it does |
+|-------|---------|--------------|
+| `q` | `?q=oud` | Search by name or inspired_by |
+| `min_price` | `?min_price=500` | Only products with a variant ≥ ₹500 |
+| `max_price` | `?max_price=1000` | Only products with a variant ≤ ₹1000 |
 
 **Examples:**
 ```
 GET /api/search/?q=oud
-GET /api/search/?q=creed
-GET /api/search/?q=vanilla leather
+GET /api/search/?q=rose&max_price=1500
+GET /api/search/?max_price=1000            ← "under ₹1000" browse
+GET /api/search/?min_price=500&max_price=2000
 ```
 
 **Response:**

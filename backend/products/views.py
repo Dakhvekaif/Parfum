@@ -57,13 +57,24 @@ class ProductListView(generics.ListAPIView):
         if collection:
             queryset = queryset.filter(collections__slug=collection)
 
-        # Price range filter (filters on variant prices)
+        # Price range filter
         min_price = self.request.query_params.get("min_price")
         max_price = self.request.query_params.get("max_price")
-        if min_price:
-            queryset = queryset.filter(variants__price__gte=min_price).distinct()
-        if max_price:
-            queryset = queryset.filter(variants__price__lte=max_price).distinct()
+        if min_price or max_price:
+            from django.db.models import Q
+            
+            if min_price:
+                queryset = queryset.filter(
+                    Q(variants__india_discount_price__isnull=False, variants__india_discount_price__gte=min_price) |
+                    Q(variants__india_discount_price__isnull=True, variants__india_price__gte=min_price)
+                )
+            if max_price:
+                queryset = queryset.filter(
+                    Q(variants__india_discount_price__isnull=False, variants__india_discount_price__lte=max_price) |
+                    Q(variants__india_discount_price__isnull=True, variants__india_price__lte=max_price)
+                )
+            
+            queryset = queryset.distinct()
 
         return queryset
 
@@ -146,12 +157,35 @@ class ProductSearchView(generics.ListAPIView):
         from django.db.models import Q
 
         query = self.request.query_params.get("q", "").strip()
-        if not query:
+        min_price = self.request.query_params.get("min_price")
+        max_price = self.request.query_params.get("max_price")
+
+        if not query and not min_price and not max_price:
             return Product.objects.none()
 
+        queryset = Product.objects.filter(is_active=True)
+
+        # Text search
+        if query:
+            queryset = queryset.filter(
+                Q(name__icontains=query) | Q(inspired_by__icontains=query)
+            )
+
+        # Price range filter
+        if min_price or max_price:
+            if min_price:
+                queryset = queryset.filter(
+                    Q(variants__india_discount_price__isnull=False, variants__india_discount_price__gte=min_price) |
+                    Q(variants__india_discount_price__isnull=True, variants__india_price__gte=min_price)
+                )
+            if max_price:
+                queryset = queryset.filter(
+                    Q(variants__india_discount_price__isnull=False, variants__india_discount_price__lte=max_price) |
+                    Q(variants__india_discount_price__isnull=True, variants__india_price__lte=max_price)
+                )
+
         return (
-            Product.objects.filter(is_active=True)
-            .filter(Q(name__icontains=query) | Q(inspired_by__icontains=query))
+            queryset
             .select_related("category")
             .prefetch_related("collections", "images", "variants")
             .distinct()
@@ -162,6 +196,8 @@ class ProductSearchView(generics.ListAPIView):
         serializer = self.get_serializer(queryset, many=True)
         return Response({
             "query": request.query_params.get("q", "").strip(),
+            "min_price": request.query_params.get("min_price"),
+            "max_price": request.query_params.get("max_price"),
             "count": queryset.count(),
             "results": serializer.data,
         })
