@@ -15,11 +15,15 @@ urlpatterns = [
     path("products/new-arrivals/", views.NewArrivalsListView.as_view(), name="new-arrivals"),
     path("products/migrate-images/", views.MigrateImagesView.as_view(), name="migrate-images"),
     path("products/tester-boxes/", views.TesterBoxListView.as_view(), name="tester-boxes"),
+    path("products/top-mens/", views.TopTenMensView.as_view(), name="top-mens"),
+    path("products/top-womens/", views.TopTenWomensView.as_view(), name="top-womens"),
+    path("products/top-unisex/", views.TopTenUnisexView.as_view(), name="top-unisex"),
     path("products/<slug:slug>/", views.ProductDetailView.as_view(), name="product-detail"),
     path("categories/", views.CategoryListView.as_view(), name="category-list"),
     path("collections/", views.CollectionListView.as_view(), name="collection-list"),
     path("search/", views.ProductSearchView.as_view(), name="product-search"),
     path("roll-ons/", views.RollOnListView.as_view(), name="roll-on-list"),
+    path("roll-ons/top/", views.TopTenRollOnsView.as_view(), name="roll-on-top"),
     path("roll-ons/<slug:slug>/", views.RollOnDetailView.as_view(), name="roll-on-detail"),
     # Admin image upload
     path(

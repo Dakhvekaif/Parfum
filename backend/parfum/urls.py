@@ -31,6 +31,9 @@ def api_root(request):
             "products": {
                 "list": "/api/products/",
                 "new_arrivals": "/api/products/new-arrivals/",
+                "top_mens": "/api/products/top-mens/",
+                "top_womens": "/api/products/top-womens/",
+                "top_unisex": "/api/products/top-unisex/",
                 "detail": "/api/products/{slug}/",
                 "search": "/api/search/?q={query}&min_price={min_price}&max_price={max_price}",
                 "categories": "/api/categories/",
@@ -38,6 +41,7 @@ def api_root(request):
             },
             "roll_ons": {
                 "list": "/api/roll-ons/",
+                "top": "/api/roll-ons/top/",
                 "detail": "/api/roll-ons/{slug}/",
             },
             "cart": {

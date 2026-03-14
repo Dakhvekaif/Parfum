@@ -99,10 +99,10 @@ DATABASES = {
         default=config(
             "DATABASE_URL",
             default=(
-                f"postgres://{config('DB_USER', default='postgres')}"
+                f"mysql://{config('DB_USER', default='root')}"
                 f":{config('DB_PASSWORD', default='')}"
                 f"@{config('DB_HOST', default='localhost')}"
-                f":{config('DB_PORT', default='5432')}"
+                f":{config('DB_PORT', default='3306')}"
                 f"/{config('DB_NAME', default='parfum_db')}"
             ),
         ),

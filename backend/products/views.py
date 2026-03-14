@@ -97,6 +97,68 @@ class NewArrivalsListView(generics.ListAPIView):
         ).order_by("-created_at")
 
 
+class TopTenMensView(generics.ListAPIView):
+    """GET /api/products/top-mens/ — Top 10 Men's products based on reviews."""
+    serializer_class = ProductListSerializer
+    permission_classes = [AllowAny]
+    pagination_class = None
+
+    def get_queryset(self):
+        return Product.objects.filter(
+            is_active=True,
+            is_roll_on=False,
+            category__slug="men"
+        ).select_related("category").prefetch_related(
+            "images", "variants"
+        ).order_by("-avg_rating", "-created_at")[:10]
+
+
+class TopTenWomensView(generics.ListAPIView):
+    """GET /api/products/top-womens/ — Top 10 Women's products based on reviews."""
+    serializer_class = ProductListSerializer
+    permission_classes = [AllowAny]
+    pagination_class = None
+
+    def get_queryset(self):
+        return Product.objects.filter(
+            is_active=True,
+            is_roll_on=False,
+            category__slug="women"
+        ).select_related("category").prefetch_related(
+            "images", "variants"
+        ).order_by("-avg_rating", "-created_at")[:10]
+
+
+class TopTenUnisexView(generics.ListAPIView):
+    """GET /api/products/top-unisex/ — Top 10 Unisex products based on reviews."""
+    serializer_class = ProductListSerializer
+    permission_classes = [AllowAny]
+    pagination_class = None
+
+    def get_queryset(self):
+        return Product.objects.filter(
+            is_active=True,
+            is_roll_on=False,
+            category__slug="unisex"
+        ).select_related("category").prefetch_related(
+            "images", "variants"
+        ).order_by("-avg_rating", "-created_at")[:10]
+
+
+class TopTenRollOnsView(generics.ListAPIView):
+    """GET /api/roll-ons/top/ — Top 10 Roll-on products based on reviews."""
+    serializer_class = ProductListSerializer
+    permission_classes = [AllowAny]
+    pagination_class = None
+
+    def get_queryset(self):
+        return Product.objects.filter(
+            is_active=True,
+            is_roll_on=True
+        ).select_related("category").prefetch_related(
+            "images", "variants"
+        ).order_by("-avg_rating", "-created_at")[:10]
+
 
 class ProductDetailView(generics.RetrieveAPIView):
     """GET /api/products/{slug}/ — Full product detail."""
