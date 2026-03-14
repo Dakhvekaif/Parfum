@@ -17,10 +17,10 @@ from .serializers import (
     ProductDetailSerializer,
     ProductImageSerializer,
     ProductListSerializer,
-    ProductVariantSerializer,
     ProductVariantWriteSerializer,
     ProductWriteSerializer,
-    NewArrivalsSerializer,
+    ProductThumbnailSerializer,
+    TesterBoxSerializer,
     TesterBoxSerializer,
     AdminTesterBoxWriteSerializer,
 )
@@ -82,7 +82,7 @@ class ProductListView(generics.ListAPIView):
 class NewArrivalsListView(generics.ListAPIView):
     """GET /api/products/new-arrivals/ — Products added in the last 30 days."""
 
-    serializer_class = NewArrivalsSerializer
+    serializer_class = ProductThumbnailSerializer
     permission_classes = [AllowAny]
     pagination_class = None
 
@@ -99,7 +99,7 @@ class NewArrivalsListView(generics.ListAPIView):
 
 class TopTenMensView(generics.ListAPIView):
     """GET /api/products/top-mens/ — Top 10 Men's products based on reviews."""
-    serializer_class = ProductListSerializer
+    serializer_class = ProductThumbnailSerializer
     permission_classes = [AllowAny]
     pagination_class = None
 
@@ -115,7 +115,7 @@ class TopTenMensView(generics.ListAPIView):
 
 class TopTenWomensView(generics.ListAPIView):
     """GET /api/products/top-womens/ — Top 10 Women's products based on reviews."""
-    serializer_class = ProductListSerializer
+    serializer_class = ProductThumbnailSerializer
     permission_classes = [AllowAny]
     pagination_class = None
 
@@ -131,7 +131,7 @@ class TopTenWomensView(generics.ListAPIView):
 
 class TopTenUnisexView(generics.ListAPIView):
     """GET /api/products/top-unisex/ — Top 10 Unisex products based on reviews."""
-    serializer_class = ProductListSerializer
+    serializer_class = ProductThumbnailSerializer
     permission_classes = [AllowAny]
     pagination_class = None
 
@@ -147,7 +147,7 @@ class TopTenUnisexView(generics.ListAPIView):
 
 class TopTenRollOnsView(generics.ListAPIView):
     """GET /api/roll-ons/top/ — Top 10 Roll-on products based on reviews."""
-    serializer_class = ProductListSerializer
+    serializer_class = ProductThumbnailSerializer
     permission_classes = [AllowAny]
     pagination_class = None
 

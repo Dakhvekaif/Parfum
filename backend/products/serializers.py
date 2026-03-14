@@ -82,8 +82,8 @@ class ProductListSerializer(serializers.ModelSerializer):
         return None
 
 
-class NewArrivalsSerializer(serializers.ModelSerializer):
-    """Ultra-lightweight serializer for New Arrivals homepage section."""
+class ProductThumbnailSerializer(serializers.ModelSerializer):
+    """Ultra-lightweight serializer for product thumbnails (Home, Top 10, etc.)."""
 
     category = CategorySerializer(read_only=True)
     primary_image = serializers.SerializerMethodField()
