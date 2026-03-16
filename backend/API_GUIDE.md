@@ -35,6 +35,17 @@ POST /api/auth/login/
 
 ---
 
+### Google Login
+```
+POST /api/auth/google/
+```
+```json
+{ "id_token": "eyJhbGciOiJSUzI1NiIsImt..." }
+```
+**Response:** user object + `tokens` → `{ "access": "...", "refresh": "..." }`
+
+---
+
 ### Logout 🔒
 ```
 POST /api/auth/logout/
@@ -631,6 +642,11 @@ POST /api/discounts/apply/
 | `rahul.sharma@example.com` | `TestPass123!` | Customer |
 | `priya.patel@example.com` | `TestPass123!` | Customer |
 | `amit.kumar@example.com` | `TestPass123!` | Customer |
+
+### Testing Google Login in Postman
+To test the Google Login endpoint (`/api/auth/google/`) using Postman, you cannot generate a valid `id_token` yourself, as it must be signed by Google. You have two options:
+1. **Frontend Integration:** Implement the Google Sign-In button on your React frontend using a library like `@react-oauth/google`. Complete the login flow in your browser, capture the `credential` (which is the `id_token`) from the success callback using `console.log()` or the Network tab, and paste it into Postman as the `id_token` in your Request body.
+2. **Google OAuth Playground:** Go to the [Google OAuth 2.0 Playground](https://developers.google.com/oauthplayground/). In step 1, select the "Google OAuth2 API v2" -> "https://www.googleapis.com/auth/userinfo.email" and "https://www.googleapis.com/auth/userinfo.profile" scopes. Complete the authorization flow to get an ID token, and use that in Postman.
 
 ---
 

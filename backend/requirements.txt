@@ -15,3 +15,5 @@ setuptools<81
 cloudinary>=1.41
 django-cloudinary-storage>=0.3
 mysqlclient>=2.2,<2.3
+google-auth>=2.20,<3.0
+requests>=2.31,<3.0

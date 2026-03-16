@@ -33,6 +33,11 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
 
+class GoogleLoginSerializer(serializers.Serializer):
+    """Google token login."""
+    id_token = serializers.CharField(write_only=True)
+
+
 class UserSerializer(serializers.ModelSerializer):
     """User profile — read & update."""
 

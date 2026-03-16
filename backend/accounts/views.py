@@ -92,6 +92,77 @@ class LoginView(APIView):
         )
 
 
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+from django.conf import settings
+
+class GoogleLoginView(APIView):
+    """POST /api/auth/google/ — Authenticate with Google ID token."""
+    
+    permission_classes = [AllowAny]
+    throttle_classes = [AuthRateThrottle]
+
+    def post(self, request):
+        from .serializers import GoogleLoginSerializer
+        serializer = GoogleLoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        token = serializer.validated_data["id_token"]
+
+        try:
+            # Specify the CLIENT_ID of the app that accesses the backend if needed, 
+            # but usually verifying without specifying client_id is okay for simple setups, 
+            # though it's safer to provide it if available.
+            idinfo = id_token.verify_oauth2_token(token, google_requests.Request())
+            
+            if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+                raise ValueError('Wrong issuer.')
+
+            email = idinfo['email']
+            first_name = idinfo.get('given_name', '')
+            last_name = idinfo.get('family_name', '')
+
+        except ValueError:
+            return Response(
+                {"error": "Invalid Google token."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        # Find or create user
+        user = User.objects.filter(email=email).first()
+        if not user:
+            user = User.objects.create_user(
+                email=email,
+                first_name=first_name,
+                last_name=last_name,
+                password=User.objects.make_random_password(),
+                auth_provider='google'
+            )
+        else:
+            if not user.is_active:
+                return Response(
+                    {"error": "Account is deactivated."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if getattr(user, 'auth_provider', '') != 'google':
+                user.auth_provider = 'google'
+                user.save(update_fields=['auth_provider'])
+
+        # Generate tokens
+        refresh = RefreshToken.for_user(user)
+        return Response(
+            {
+                "message": "Google Login successful.",
+                "user": UserSerializer(user).data,
+                "tokens": {
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
 class LogoutView(APIView):
     """POST /api/auth/logout/ — Blacklist the refresh token."""
 
