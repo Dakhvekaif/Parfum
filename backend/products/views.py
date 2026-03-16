@@ -396,12 +396,27 @@ class AdminVariantView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        serializer = ProductVariantWriteSerializer(data=request.data)
+        # Map legacy frontend fields to the new schema
+        data = request.data.copy() if hasattr(request.data, "copy") else dict(request.data)
+        if "price" in data and "india_price" not in data:
+            try:
+                price_val = float(data["price"])
+                data["india_price"] = price_val
+                data["switzerland_price"] = price_val * 1.2
+            except (ValueError, TypeError):
+                pass
+        if "discount_price" in data and "india_discount_price" not in data:
+            data["india_discount_price"] = data["discount_price"]
+        if "stock" in data and "india_stock" not in data:
+            data["india_stock"] = data["stock"]
+            data["switzerland_stock"] = data["stock"]
+
+        serializer = ProductVariantWriteSerializer(data=data)
         serializer.is_valid(raise_exception=True)
 
         # Check for duplicate ml size
-        ml = serializer.validated_data["quantity_ml"]
-        if product.variants.filter(quantity_ml=ml).exists():
+        ml = serializer.validated_data.get("quantity_ml")
+        if ml and product.variants.filter(quantity_ml=ml).exists():
             return Response(
                 {"error": f"A {ml}ml variant already exists for this product."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -423,7 +438,25 @@ class AdminVariantView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        serializer = ProductVariantWriteSerializer(variant, data=request.data, partial=True)
+        # Map legacy frontend fields to the new schema
+        data = request.data.copy() if hasattr(request.data, "copy") else dict(request.data)
+        if "price" in data and "india_price" not in data:
+            try:
+                price_val = float(data["price"])
+                data["india_price"] = price_val
+                data["switzerland_price"] = price_val * 1.2
+            except (ValueError, TypeError):
+                pass
+        if "discount_price" in data and "india_discount_price" not in data:
+            if data["discount_price"] in ["", "null", None]:
+                data["india_discount_price"] = None
+            else:
+                data["india_discount_price"] = data["discount_price"]
+        if "stock" in data and "india_stock" not in data:
+            data["india_stock"] = data["stock"]
+            data["switzerland_stock"] = data["stock"]
+
+        serializer = ProductVariantWriteSerializer(variant, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(ProductVariantSerializer(variant).data)

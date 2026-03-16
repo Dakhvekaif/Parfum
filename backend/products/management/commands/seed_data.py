@@ -126,9 +126,10 @@ class Command(BaseCommand):
         users = self._create_users()
         categories = self._create_categories()
         collections = self._create_collections()
-        products = self._create_products(categories, collections)
-        self._create_variants(products)
-        self._create_product_images(products)
+        # products = self._create_products(categories, collections)
+        # self._create_variants(products)
+        # self._create_product_images(products)
+        products = []
         self._create_discounts()
         self._create_orders(users, products)
         self._create_reviews(users, products)
@@ -538,6 +539,10 @@ class Command(BaseCommand):
     def _create_orders(self, users, products):
         from orders.models import Order, OrderItem, Payment
 
+        if not products:
+            self.stdout.write("[ORDERS] Skipping because products list is empty.")
+            return
+
         self.stdout.write("[ORDERS] Creating orders...")
         now = timezone.now()
         statuses = ["pending", "confirmed", "processing", "shipped", "delivered"]
@@ -614,6 +619,10 @@ class Command(BaseCommand):
         from django.db.models import Avg
         from reviews.models import Review
 
+        if not products:
+            self.stdout.write("[REVIEWS] Skipping because products list is empty.")
+            return
+
         self.stdout.write("[REVIEWS] Creating reviews...")
         review_comments = [
             "Absolutely love this fragrance! Long-lasting and gets me so many compliments.",
@@ -660,6 +669,10 @@ class Command(BaseCommand):
     # ------------------------------------------------------------------
     def _create_cart_wishlist(self, users, products):
         from cart.models import Cart, CartItem, Wishlist
+
+        if not products:
+            self.stdout.write("[CART] Skipping because products list is empty.")
+            return
 
         self.stdout.write("[CART] Creating carts & wishlists...")
 

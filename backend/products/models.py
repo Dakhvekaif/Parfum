@@ -142,7 +142,7 @@ class Product(models.Model):
         variant = self.variants.order_by("india_price").first()
         if variant:
             return variant.india_effective_price
-        return None
+        return 0.00
 
     @property
     def in_stock(self):
