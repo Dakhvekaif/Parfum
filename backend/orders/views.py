@@ -666,6 +666,42 @@ class AdminOrderStatusView(APIView):
             except Payment.DoesNotExist:
                 pass
 
+        # If order is cancelled, initiate refund for completed online payments
+        elif order.status == Order.Status.CANCELLED:
+            try:
+                payment = order.payment
+                if (
+                    payment.method != Payment.Method.COD
+                    and payment.status == Payment.Status.COMPLETED
+                    and payment.razorpay_payment_id
+                ):
+                    if razorpay_client:
+                        try:
+                            # Initiate full refund via Razorpay API
+                            razorpay_client.refund.create({
+                                "payment_id": payment.razorpay_payment_id,
+                                "notes": {
+                                    "order_id": str(order.order_number),
+                                    "reason": "Admin cancelled the order."
+                                }
+                            })
+                            payment.status = Payment.Status.REFUNDED
+                            payment.save()
+                            logger.info(f"Refund initiated for Order {order.pk} (Payment {payment.razorpay_payment_id})")
+                        except Exception as e:
+                            logger.error(f"Razorpay refund failed for Order {order.pk}: {e}")
+                            # We still save the order status as cancelled, 
+                            # but admin might need to retry the refund manually if Razorpay errors out.
+                    else:
+                        logger.error("Razorpay client not configured; cannot process refund.")
+                elif payment.status == Payment.Status.PENDING:
+                    # If it was pending (e.g., COD or incomplete online), just mark it failed/cancelled
+                    payment.status = Payment.Status.FAILED
+                    payment.save()
+
+            except Payment.DoesNotExist:
+                pass
+
         return Response(OrderSerializer(order).data)
 
 

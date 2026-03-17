@@ -54,11 +54,12 @@ class OrderSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(
         source="get_status_display", read_only=True
     )
+    customer_email = serializers.EmailField(source="user.email", read_only=True)
 
     class Meta:
         model = Order
         fields = [
-            "id", "order_number", "status", "status_display",
+            "id", "order_number", "status", "status_display", "customer_email",
             "subtotal", "discount_amount", "total_amount",
             "shipping_name", "shipping_address", "shipping_city",
             "shipping_pincode", "shipping_phone",
@@ -78,12 +79,15 @@ class OrderListSerializer(serializers.ModelSerializer):
         source="get_status_display", read_only=True
     )
     item_count = serializers.IntegerField(source="items.count", read_only=True)
+    customer_email = serializers.EmailField(source="user.email", read_only=True)
 
     class Meta:
         model = Order
         fields = [
-            "id", "order_number", "status", "status_display",
+            "id", "order_number", "status", "status_display", "customer_email",
             "total_amount", "item_count", "created_at",
+            "shipping_name", "shipping_address", "shipping_city",
+            "shipping_pincode", "shipping_phone",
             "items", "payment",
         ]
 
