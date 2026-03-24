@@ -39,6 +39,8 @@ class Order(models.Model):
     # Amounts
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    gst_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    shipping_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
 
     # Shipping — snapshot at time of order
@@ -105,6 +107,12 @@ class OrderItem(models.Model):
     selected_origin = models.CharField(max_length=20, default="india", help_text="Origin selected at purchase")
     quantity = models.PositiveIntegerField()
     price_at_purchase = models.DecimalField(max_digits=10, decimal_places=2)
+
+    tester_box_items = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Snapshot of variant IDs selected for custom tester boxes"
+    )
 
     class Meta:
         ordering = ["id"]

@@ -55,6 +55,14 @@ class CartItem(models.Model):
         default="india"
     )
     quantity = models.PositiveIntegerField(default=1)
+
+    # Store IDs of selected 5ml variants for custom tester boxes
+    tester_box_items = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of variant IDs selected for custom tester boxes"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

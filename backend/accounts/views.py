@@ -131,11 +131,12 @@ class GoogleLoginView(APIView):
         # Find or create user
         user = User.objects.filter(email=email).first()
         if not user:
+            from django.utils.crypto import get_random_string
             user = User.objects.create_user(
                 email=email,
                 first_name=first_name,
                 last_name=last_name,
-                password=User.objects.make_random_password(),
+                password=get_random_string(32),
                 auth_provider='google'
             )
         else:

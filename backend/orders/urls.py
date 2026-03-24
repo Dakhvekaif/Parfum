@@ -6,6 +6,8 @@ urlpatterns = [
     # Customer
     path("orders/checkout/", views.CheckoutView.as_view(), name="checkout"),
     path("orders/buy-now/", views.BuyNowView.as_view(), name="buy-now"),
+    path("orders/cart-preview/", views.CartPricingPreviewView.as_view(), name="cart-preview"),
+    path("orders/buynow-preview/", views.BuyNowPricingPreviewView.as_view(), name="buynow-preview"),
     path("orders/", views.OrderListView.as_view(), name="order-list"),
     path("orders/<int:pk>/", views.OrderDetailView.as_view(), name="order-detail"),
     path("orders/<int:order_id>/verify-payment/", views.VerifyPaymentView.as_view(), name="verify-payment"),

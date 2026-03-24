@@ -41,6 +41,7 @@ class CartAddView(APIView):
         variant_id = serializer.validated_data["variant_id"]
         quantity = serializer.validated_data["quantity"]
         selected_origin = serializer.validated_data["selected_origin"]
+        tester_box_items = serializer.validated_data.get("tester_box_items", [])
 
         try:
             variant = ProductVariant.objects.select_related("product").get(pk=variant_id)
@@ -58,7 +59,7 @@ class CartAddView(APIView):
 
         stock = variant.switzerland_stock if selected_origin == "switzerland" else variant.india_stock
 
-        if stock < quantity:
+        if stock < quantity and variant.oversell != 'continue':
             return Response(
                 {"error": f"Only {stock} items in stock for {variant.quantity_ml}ml ({selected_origin})."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -69,12 +70,14 @@ class CartAddView(APIView):
             cart=cart,
             variant=variant,
             selected_origin=selected_origin,
-            defaults={"product": variant.product, "quantity": quantity},
+            defaults={"product": variant.product, "quantity": quantity, "tester_box_items": tester_box_items},
         )
 
         if not created:
             cart_item.quantity += quantity
-            if cart_item.quantity > stock:
+            if tester_box_items:
+                cart_item.tester_box_items = tester_box_items
+            if cart_item.quantity > stock and variant.oversell != 'continue':
                 return Response(
                     {"error": f"Cannot add more. Only {stock} in stock for {variant.quantity_ml}ml ({selected_origin})."},
                     status=status.HTTP_400_BAD_REQUEST,
@@ -110,7 +113,7 @@ class CartUpdateView(APIView):
         quantity = int(quantity)
         stock = cart_item.variant.switzerland_stock if cart_item.selected_origin == "switzerland" else cart_item.variant.india_stock
 
-        if quantity > stock:
+        if quantity > stock and cart_item.variant.oversell != 'continue':
             return Response(
                 {"error": f"Only {stock} items in stock for {cart_item.selected_origin}."},
                 status=status.HTTP_400_BAD_REQUEST,

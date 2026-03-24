@@ -8,7 +8,8 @@ from .models import Order, OrderItem, Payment
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
-    line_total = serializers.ReadOnlyField()
+    line_total = serializers.FloatField(read_only=True)
+    price_at_purchase = serializers.FloatField()
     product_slug = serializers.SerializerMethodField()
     product_image = serializers.SerializerMethodField()
 
@@ -17,7 +18,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = [
             "id", "product", "product_name", "product_slug", "product_image",
             "quantity_ml", "selected_origin", "quantity",
-            "price_at_purchase", "line_total",
+            "price_at_purchase", "line_total", "tester_box_items",
         ]
         read_only_fields = fields
 
@@ -36,6 +37,8 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 
 class PaymentSerializer(serializers.ModelSerializer):
+    amount = serializers.FloatField()
+
     class Meta:
         model = Payment
         fields = [
@@ -55,12 +58,17 @@ class OrderSerializer(serializers.ModelSerializer):
         source="get_status_display", read_only=True
     )
     customer_email = serializers.EmailField(source="user.email", read_only=True)
+    subtotal = serializers.FloatField()
+    discount_amount = serializers.FloatField()
+    gst_amount = serializers.FloatField()
+    shipping_fee = serializers.FloatField()
+    total_amount = serializers.FloatField()
 
     class Meta:
         model = Order
         fields = [
             "id", "order_number", "status", "status_display", "customer_email",
-            "subtotal", "discount_amount", "total_amount",
+            "subtotal", "discount_amount", "gst_amount", "shipping_fee", "total_amount",
             "shipping_name", "shipping_address", "shipping_city",
             "shipping_pincode", "shipping_phone",
             "tracking_id", "notes", "discount_code",
@@ -80,12 +88,15 @@ class OrderListSerializer(serializers.ModelSerializer):
     )
     item_count = serializers.IntegerField(source="items.count", read_only=True)
     customer_email = serializers.EmailField(source="user.email", read_only=True)
+    total_amount = serializers.FloatField()
+    gst_amount = serializers.FloatField()
+    shipping_fee = serializers.FloatField()
 
     class Meta:
         model = Order
         fields = [
             "id", "order_number", "status", "status_display", "customer_email",
-            "total_amount", "item_count", "created_at",
+            "total_amount", "gst_amount", "shipping_fee", "item_count", "created_at",
             "shipping_name", "shipping_address", "shipping_city",
             "shipping_pincode", "shipping_phone",
             "items", "payment",
@@ -143,3 +154,21 @@ class PaymentCreateSerializer(serializers.Serializer):
 
     transaction_id = serializers.CharField(max_length=200)
     method = serializers.ChoiceField(choices=Payment.Method.choices)
+
+
+class CartPreviewSerializer(serializers.Serializer):
+    """Input for cart pricing preview — only discount code (optional)."""
+
+    discount_code = serializers.CharField(max_length=50, required=False, allow_blank=True)
+
+
+class BuyNowPreviewSerializer(serializers.Serializer):
+    """Input for buy-now pricing preview — variant + quantity + origin."""
+
+    variant_id = serializers.IntegerField()
+    quantity = serializers.IntegerField(min_value=1, default=1)
+    selected_origin = serializers.ChoiceField(
+        choices=[("india", "India"), ("switzerland", "Switzerland")],
+        default="india"
+    )
+    discount_code = serializers.CharField(max_length=50, required=False, allow_blank=True)

@@ -138,8 +138,8 @@ class Product(models.Model):
 
     @property
     def starting_price(self):
-        """Returns the lowest effective price across all variants (for listings)."""
-        variant = self.variants.order_by("india_price").first()
+        """Returns the lowest effective price across all non-5ml variants (for listings)."""
+        variant = self.variants.exclude(quantity_ml=5).order_by("india_price").first()
         if variant:
             return variant.india_effective_price
         return 0.00
@@ -183,9 +183,30 @@ class ProductVariant(models.Model):
     india_stock = models.PositiveIntegerField(default=0, help_text="Stock for India variant")
     switzerland_stock = models.PositiveIntegerField(default=0, help_text="Stock for Switzerland variant")
 
+    OVERSELL_CHOICES = [('deny', 'Deny'), ('continue', 'Continue')]
+    oversell = models.CharField(
+        max_length=10, 
+        choices=OVERSELL_CHOICES, 
+        default='deny',
+        help_text="Allow purchase when out of stock"
+    )
+
     class Meta:
         ordering = ["quantity_ml"]
         unique_together = ("product", "quantity_ml")
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.quantity_ml != 5:
+            if not ProductVariant.objects.filter(product=self.product, quantity_ml=5).exists():
+                ProductVariant.objects.create(
+                    product=self.product,
+                    quantity_ml=5,
+                    india_price=0.00,
+                    switzerland_price=0.00,
+                    india_stock=0,
+                    switzerland_stock=0,
+                )
 
     def __str__(self):
         return f"{self.product.name} — {self.quantity_ml}ml"

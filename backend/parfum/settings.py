@@ -29,6 +29,12 @@ ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv(
 if RENDER:
     ALLOWED_HOSTS.append(".onrender.com")
 
+# Production: also allow swissaromas.com domains
+if not DEBUG:
+    for host in ["https://api.swissaromas.com/","https://swissaromas.com/", "https://www.swissaromas.com/", "https://swissaroma.vercel.app"]:
+        if host not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(host)
+
 # =============================================================================
 # APPLICATION DEFINITION
 # =============================================================================
@@ -181,10 +187,28 @@ SIMPLE_JWT = {
 }
 
 # =============================================================================
-# CORS — Allow React frontend
+# CORS — Allow frontend origins
 # =============================================================================
-CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins for now (frontend team dev)
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True  # Wide-open during local dev
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = [
+        "https://swissaromas.com",
+        "https://www.swissaromas.com",
+        "https://swissaroma.vercel.app",     # Vercel preview
+    ]
 CORS_ALLOW_CREDENTIALS = True
+
+# =============================================================================
+# CSRF — Trusted origins for Django admin (api.swissaromas.com/admin/)
+# =============================================================================
+CSRF_TRUSTED_ORIGINS = [
+    "https://api.swissaromas.com",
+    "https://swissaromas.com",
+    "https://www.swissaromas.com",
+    "https://swissaroma.vercel.app",
+]
 
 # =============================================================================
 # INTERNATIONALIZATION

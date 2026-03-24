@@ -10,6 +10,7 @@ import razorpay
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
+from decimal import Decimal
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -21,7 +22,9 @@ from parfum.permissions import IsAdmin
 
 from .models import Order, OrderItem, Payment
 from .serializers import (
+    BuyNowPreviewSerializer,
     BuyNowSerializer,
+    CartPreviewSerializer,
     CheckoutSerializer,
     OrderListSerializer,
     OrderSerializer,
@@ -99,7 +102,7 @@ class CheckoutView(APIView):
                 if item.selected_origin == "switzerland"
                 else item.variant.india_stock
             )
-            if item.quantity > available_stock:
+            if item.quantity > available_stock and item.variant.oversell != 'continue':
                 errors.append(
                     f"{item.product.name} ({item.variant.quantity_ml}ml - {item.selected_origin}): "
                     f"only {available_stock} in stock "
@@ -135,7 +138,11 @@ class CheckoutView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-        total_amount = subtotal - discount_amount
+        taxable_amount = subtotal - discount_amount
+        gst_amount = taxable_amount * Decimal("0.18")
+        shipping_fee = Decimal("50.00") if taxable_amount < 499 else Decimal("0.00")
+        total_amount = taxable_amount + gst_amount + shipping_fee
+        
         is_cod = data["payment_method"] == Payment.Method.COD
 
         # ── Create Razorpay order (for online payments only) ──
@@ -167,6 +174,8 @@ class CheckoutView(APIView):
             user=request.user,
             subtotal=subtotal,
             discount_amount=discount_amount,
+            gst_amount=gst_amount,
+            shipping_fee=shipping_fee,
             total_amount=total_amount,
             shipping_name=data["shipping_name"],
             shipping_address=data["shipping_address"],
@@ -188,6 +197,7 @@ class CheckoutView(APIView):
                 selected_origin=item.selected_origin,
                 quantity=item.quantity,
                 price_at_purchase=item.line_total / item.quantity,
+                tester_box_items=item.tester_box_items,
             )
             # Deduct from the correct regional stock
             if item.selected_origin == "switzerland":
@@ -278,7 +288,7 @@ class BuyNowView(APIView):
         available_stock = (
             variant.switzerland_stock if origin == "switzerland" else variant.india_stock
         )
-        if quantity > available_stock:
+        if quantity > available_stock and variant.oversell != 'continue':
             return Response(
                 {"error": f"{product.name} ({variant.quantity_ml}ml - {origin}): "
                           f"only {available_stock} in stock (requested {quantity})"},
@@ -307,7 +317,11 @@ class BuyNowView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-        total_amount = subtotal - discount_amount
+        taxable_amount = subtotal - discount_amount
+        gst_amount = taxable_amount * Decimal("0.18")
+        shipping_fee = Decimal("50.00") if taxable_amount < 499 else Decimal("0.00")
+        total_amount = taxable_amount + gst_amount + shipping_fee
+        
         is_cod = data["payment_method"] == Payment.Method.COD
 
         # ── Create Razorpay order (online payments only) ──
@@ -338,6 +352,8 @@ class BuyNowView(APIView):
             user=request.user,
             subtotal=subtotal,
             discount_amount=discount_amount,
+            gst_amount=gst_amount,
+            shipping_fee=shipping_fee,
             total_amount=total_amount,
             shipping_name=data["shipping_name"],
             shipping_address=data["shipping_address"],
@@ -582,6 +598,200 @@ class RazorpayWebhookView(APIView):
                     pass
 
         return Response({"status": "ok"})
+
+
+# ──────────────────────────────────────────────────
+# PRICING PREVIEW (before payment)
+# ──────────────────────────────────────────────────
+
+
+class CartPricingPreviewView(APIView):
+    """
+    POST /api/orders/cart-preview/
+
+    Returns full pricing breakdown for the current cart WITHOUT
+    creating any order or payment. Frontend can show GST, shipping,
+    and total before the user clicks "Pay".
+
+    Body (all optional):
+        { "discount_code": "SAVE10" }
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # ── Get cart ──
+        try:
+            cart = Cart.objects.prefetch_related(
+                "items__product", "items__variant"
+            ).get(user=request.user)
+        except Cart.DoesNotExist:
+            return Response(
+                {"error": "Cart is empty."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        cart_items = cart.items.all()
+        if not cart_items.exists():
+            return Response(
+                {"error": "Cart is empty."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = CartPreviewSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        # ── Calculate subtotal ──
+        subtotal = sum(item.line_total for item in cart_items)
+
+        # ── Discount ──
+        discount_amount = Decimal("0.00")
+        discount_code = data.get("discount_code", "").strip()
+        if discount_code:
+            try:
+                discount_obj = Discount.objects.get(code__iexact=discount_code)
+                if not discount_obj.is_valid:
+                    return Response(
+                        {"error": "Discount code is expired or invalid."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                discount_amount = discount_obj.calculate_discount(subtotal)
+            except Discount.DoesNotExist:
+                return Response(
+                    {"error": "Invalid discount code."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        # ── GST & Shipping (exact same logic as CheckoutView) ──
+        taxable_amount = subtotal - discount_amount
+        gst_amount = taxable_amount * Decimal("0.18")
+        shipping_fee = Decimal("50.00") if taxable_amount < 499 else Decimal("0.00")
+        total_amount = taxable_amount + gst_amount + shipping_fee
+
+        # ── Build per-item breakdown ──
+        items_data = []
+        for item in cart_items:
+            unit_price = item.line_total / item.quantity if item.quantity else 0
+            items_data.append({
+                "product_name": item.product.name,
+                "quantity_ml": item.variant.quantity_ml,
+                "selected_origin": item.selected_origin,
+                "quantity": item.quantity,
+                "unit_price": float(unit_price),
+                "line_total": float(item.line_total),
+            })
+
+        return Response({
+            "subtotal": float(subtotal),
+            "discount_amount": float(discount_amount),
+            "gst_amount": float(gst_amount),
+            "shipping_fee": float(shipping_fee),
+            "total_amount": float(total_amount),
+            "free_shipping_threshold": 499,
+            "items": items_data,
+        })
+
+
+class BuyNowPricingPreviewView(APIView):
+    """
+    POST /api/orders/buynow-preview/
+
+    Returns full pricing breakdown for a single variant purchase
+    WITHOUT creating any order or payment.
+
+    Body:
+        {
+            "variant_id": 47,
+            "quantity": 1,
+            "selected_origin": "india",
+            "discount_code": ""          // optional
+        }
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = BuyNowPreviewSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        # ── Get variant ──
+        from products.models import ProductVariant
+
+        try:
+            variant = ProductVariant.objects.select_related("product").get(
+                pk=data["variant_id"]
+            )
+        except ProductVariant.DoesNotExist:
+            return Response(
+                {"error": "Product variant not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        product = variant.product
+        quantity = data["quantity"]
+        origin = data.get("selected_origin", "india")
+
+        # ── Validate ──
+        if not product.is_active:
+            return Response(
+                {"error": f"{product.name} is no longer available."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        available_stock = (
+            variant.switzerland_stock if origin == "switzerland" else variant.india_stock
+        )
+        if quantity > available_stock and variant.oversell != 'continue':
+            return Response(
+                {"error": f"{product.name} ({variant.quantity_ml}ml - {origin}): "
+                          f"only {available_stock} in stock (requested {quantity})"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # ── Calculate totals (exact same logic as BuyNowView) ──
+        price = variant.switzerland_effective_price if origin == "switzerland" else variant.india_effective_price
+        subtotal = price * quantity
+
+        discount_amount = Decimal("0.00")
+        discount_code = data.get("discount_code", "").strip()
+        if discount_code:
+            try:
+                discount_obj = Discount.objects.get(code__iexact=discount_code)
+                if not discount_obj.is_valid:
+                    return Response(
+                        {"error": "Discount code is expired or invalid."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                discount_amount = discount_obj.calculate_discount(subtotal)
+            except Discount.DoesNotExist:
+                return Response(
+                    {"error": "Invalid discount code."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        taxable_amount = subtotal - discount_amount
+        gst_amount = taxable_amount * Decimal("0.18")
+        shipping_fee = Decimal("50.00") if taxable_amount < 499 else Decimal("0.00")
+        total_amount = taxable_amount + gst_amount + shipping_fee
+
+        return Response({
+            "subtotal": float(subtotal),
+            "discount_amount": float(discount_amount),
+            "gst_amount": float(gst_amount),
+            "shipping_fee": float(shipping_fee),
+            "total_amount": float(total_amount),
+            "free_shipping_threshold": 499,
+            "items": [{
+                "product_name": product.name,
+                "quantity_ml": variant.quantity_ml,
+                "selected_origin": origin,
+                "quantity": quantity,
+                "unit_price": float(price),
+                "line_total": float(subtotal),
+            }],
+        })
 
 
 class OrderListView(generics.ListAPIView):

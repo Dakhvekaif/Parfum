@@ -434,7 +434,56 @@ POST /api/wishlist/toggle/
 ---
 ---
 
-## 📦 ORDERS & PAYMENTS 🔒
+### Pricing Preview (Before Checkout) 🔒
+
+Use these endpoints to show the user a full pricing breakdown (Subtotal, Discount, GST 18%, Shipping) **before** they proceed to payment. They do not create any orders.
+
+#### Cart Preview
+```
+POST /api/orders/cart-preview/
+```
+```json
+{
+  "discount_code": "WELCOME10" // Optional
+}
+```
+
+#### Buy Now Preview
+```
+POST /api/orders/buynow-preview/
+```
+```json
+{
+  "variant_id": 3,
+  "quantity": 1,
+  "selected_origin": "india",
+  "discount_code": "" // Optional
+}
+```
+
+**Response (Both):**
+```json
+{
+  "subtotal": 2999.0,
+  "discount_amount": 0.0,
+  "gst_amount": 539.82,
+  "shipping_fee": 0.0,
+  "total_amount": 3538.82,
+  "free_shipping_threshold": 499,
+  "items": [
+    {
+      "product_name": "Alpine Noir EDP",
+      "quantity_ml": 50,
+      "selected_origin": "india",
+      "quantity": 1,
+      "unit_price": 2999.0,
+      "line_total": 2999.0
+    }
+  ]
+}
+```
+
+---
 
 ### Step 1: Checkout (Cart → Order)
 ```

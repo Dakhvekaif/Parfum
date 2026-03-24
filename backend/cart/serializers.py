@@ -4,7 +4,7 @@ Cart and Wishlist serializers.
 
 from rest_framework import serializers
 
-from products.serializers import ProductListSerializer, ProductVariantSerializer
+from products.serializers import ProductListSerializer, ProductThumbnailSerializer, ProductVariantSerializer
 
 from .models import Cart, CartItem, Wishlist
 
@@ -18,7 +18,7 @@ class CartItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CartItem
-        fields = ["id", "product", "variant", "quantity", "line_total", "selected_origin"]
+        fields = ["id", "product", "variant", "quantity", "line_total", "selected_origin", "tester_box_items"]
 
 
 class CartItemWriteSerializer(serializers.Serializer):
@@ -29,6 +29,11 @@ class CartItemWriteSerializer(serializers.Serializer):
     selected_origin = serializers.ChoiceField(
         choices=[("india", "India"), ("switzerland", "Switzerland")],
         default="india"
+    )
+    tester_box_items = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=False,
+        default=list
     )
 
 
@@ -43,7 +48,7 @@ class CartSerializer(serializers.ModelSerializer):
 
 
 class WishlistSerializer(serializers.ModelSerializer):
-    product = ProductListSerializer(read_only=True)
+    product = ProductThumbnailSerializer(read_only=True)
 
     class Meta:
         model = Wishlist

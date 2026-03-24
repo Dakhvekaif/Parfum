@@ -7,6 +7,7 @@ from rest_framework import filters, generics, parsers, status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.db.models import Prefetch
 
 from parfum.permissions import IsAdmin
 
@@ -17,10 +18,10 @@ from .serializers import (
     ProductDetailSerializer,
     ProductImageSerializer,
     ProductListSerializer,
+    ProductVariantSerializer,
     ProductVariantWriteSerializer,
     ProductWriteSerializer,
     ProductThumbnailSerializer,
-    TesterBoxSerializer,
     TesterBoxSerializer,
     AdminTesterBoxWriteSerializer,
 )
@@ -200,7 +201,8 @@ class TesterBoxListView(generics.ListAPIView):
 
     def get_queryset(self):
         return TesterBox.objects.filter(is_active=True).prefetch_related(
-            "products", "products__category", "products__images", "products__variants"
+            Prefetch("products", queryset=Product.objects.filter(variants__quantity_ml=5).distinct(), to_attr="prefetched_products_5ml"),
+            "products__category", "products__images", "products__variants"
         )
 
 
@@ -398,6 +400,13 @@ class AdminVariantView(APIView):
 
         # Map legacy frontend fields to the new schema
         data = request.data.copy() if hasattr(request.data, "copy") else dict(request.data)
+        
+        # Safe fallback for null prices
+        if data.get("india_price") in ["", "null", None]:
+            data["india_price"] = 0.00
+        if data.get("switzerland_price") in ["", "null", None]:
+            data["switzerland_price"] = 0.00
+            
         if "price" in data and "india_price" not in data:
             try:
                 price_val = float(data["price"])
@@ -428,6 +437,10 @@ class AdminVariantView(APIView):
             status=status.HTTP_201_CREATED,
         )
 
+    def patch(self, request, product_id, variant_id=None):
+        """Partial update an existing variant (redirects to put which handles partial)."""
+        return self.put(request, product_id, variant_id)
+
     def put(self, request, product_id, variant_id=None):
         """Update an existing variant."""
         try:
@@ -440,6 +453,13 @@ class AdminVariantView(APIView):
 
         # Map legacy frontend fields to the new schema
         data = request.data.copy() if hasattr(request.data, "copy") else dict(request.data)
+        
+        # Safe fallback for null prices
+        if data.get("india_price") in ["", "null", None]:
+            data["india_price"] = 0.00
+        if data.get("switzerland_price") in ["", "null", None]:
+            data["switzerland_price"] = 0.00
+            
         if "price" in data and "india_price" not in data:
             try:
                 price_val = float(data["price"])
@@ -516,6 +536,26 @@ class ProductImageUploadView(APIView):
             ProductImageSerializer(product_image).data,
             status=status.HTTP_201_CREATED,
         )
+
+    def patch(self, request, product_id):
+        """PATCH — set an image as primary by image_id query param."""
+        image_id = request.query_params.get("image_id")
+        if not image_id:
+            return Response(
+                {"error": "image_id query parameter required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            from django.db.models import F
+            image = ProductImage.objects.get(pk=image_id, product_id=product_id)
+            # Push all other images down
+            ProductImage.objects.filter(product_id=product_id).exclude(pk=image_id).update(sort_order=F('sort_order') + 1)
+            # Set this image as primary
+            image.sort_order = 0
+            image.save(update_fields=["sort_order"])
+            return Response({"message": "Image set as primary."}, status=status.HTTP_200_OK)
+        except ProductImage.DoesNotExist:
+            return Response({"error": "Image not found."}, status=status.HTTP_404_NOT_FOUND)
 
     def delete(self, request, product_id):
         """DELETE — remove a product image by image_id query param."""

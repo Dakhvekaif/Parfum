@@ -57,6 +57,9 @@ def api_root(request):
             },
             "orders": {
                 "checkout": "/api/orders/checkout/",
+                "buy_now": "/api/orders/buy-now/",
+                "cart_preview": "/api/orders/cart-preview/",
+                "buynow_preview": "/api/orders/buynow-preview/",
                 "list": "/api/orders/",
                 "detail": "/api/orders/{id}/",
             },

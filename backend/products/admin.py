@@ -66,3 +66,8 @@ class TesterBoxAdmin(admin.ModelAdmin):
     list_filter = ["is_active"]
     prepopulated_fields = {"slug": ("name",)}
     filter_horizontal = ["products"]
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "products":
+            kwargs["queryset"] = Product.objects.filter(variants__quantity_ml=5).distinct()
+        return super().formfield_for_manytomany(db_field, request, **kwargs)

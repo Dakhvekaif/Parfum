@@ -48,12 +48,29 @@ class ProductVariantSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductVariant
         fields = [
-            "id", "quantity_ml", 
+            "id", "quantity_ml",
             "india_price", "india_discount_price", "india_effective_price", "india_discount_percentage",
             "switzerland_price", "switzerland_discount_price", "switzerland_effective_price", "switzerland_discount_percentage",
             "india_stock", "india_in_stock",
             "switzerland_stock", "switzerland_in_stock",
-            "in_stock",
+            "in_stock", "oversell",
+        ]
+
+
+class TesterBoxVariantSerializer(serializers.ModelSerializer):
+    """Ultra-lightweight variant for Tester Boxes (No Prices)."""
+
+    in_stock = serializers.ReadOnlyField()
+    india_in_stock = serializers.ReadOnlyField()
+    switzerland_in_stock = serializers.ReadOnlyField()
+
+    class Meta:
+        model = ProductVariant
+        fields = [
+            "id", "quantity_ml",
+            "india_stock", "india_in_stock",
+            "switzerland_stock", "switzerland_in_stock",
+            "in_stock", "oversell",
         ]
 
 
@@ -62,7 +79,7 @@ class ProductListSerializer(serializers.ModelSerializer):
 
     category = CategorySerializer(read_only=True)
     primary_image = serializers.SerializerMethodField()
-    variants = ProductVariantSerializer(many=True, read_only=True)
+    variants = serializers.SerializerMethodField()
     starting_price = serializers.ReadOnlyField()
     in_stock = serializers.ReadOnlyField()
 
@@ -81,6 +98,11 @@ class ProductListSerializer(serializers.ModelSerializer):
             return ProductImageSerializer(first_image).data
         return None
 
+    def get_variants(self, obj):
+        # Exclude 5ml variants from the main listing
+        filtered_variants = [v for v in obj.variants.all() if v.quantity_ml != 5]
+        return ProductVariantSerializer(filtered_variants, many=True).data
+
 
 class ProductThumbnailSerializer(serializers.ModelSerializer):
     """Ultra-lightweight serializer for product thumbnails (Home, Top 10, etc.)."""
@@ -92,7 +114,7 @@ class ProductThumbnailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
-            "id", "name", "slug", "category",
+            "id", "name", "slug", "inspired_by", "category",
             "avg_rating", "starting_price", "primary_image",
         ]
 
@@ -127,8 +149,8 @@ class TesterBoxItemSerializer(serializers.ModelSerializer):
         return None
 
     def get_variants(self, obj):
-        tester_variants = obj.variants.filter(quantity_ml=5)
-        return ProductVariantSerializer(tester_variants, many=True).data
+        tester_variants = [v for v in obj.variants.all() if v.quantity_ml == 5]
+        return TesterBoxVariantSerializer(tester_variants, many=True).data
 
 class TesterBoxSerializer(serializers.ModelSerializer):
     """Public read-only serializer for Tester Boxes and their 5ml products."""
@@ -142,7 +164,7 @@ class TesterBoxSerializer(serializers.ModelSerializer):
 class AdminTesterBoxWriteSerializer(serializers.ModelSerializer):
     """Admin writes tester boxes with related product IDs."""
     product_ids = serializers.PrimaryKeyRelatedField(
-        queryset=Product.objects.all(), source="products",
+        queryset=Product.objects.filter(variants__quantity_ml=5).distinct(), source="products",
         many=True, required=False,
     )
 
@@ -172,7 +194,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     collections = CollectionSerializer(many=True, read_only=True)
     images = ProductImageSerializer(many=True, read_only=True)
-    variants = ProductVariantSerializer(many=True, read_only=True)
+    variants = serializers.SerializerMethodField()
     starting_price = serializers.ReadOnlyField()
     in_stock = serializers.ReadOnlyField()
 
@@ -184,6 +206,11 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             "category", "collections", "images", "variants",
             "created_at", "updated_at",
         ]
+
+    def get_variants(self, obj):
+        # Exclude 5ml variants from the details
+        filtered_variants = [v for v in obj.variants.all() if v.quantity_ml != 5]
+        return ProductVariantSerializer(filtered_variants, many=True).data
 
 
 class ProductWriteSerializer(serializers.ModelSerializer):
@@ -229,4 +256,5 @@ class ProductVariantWriteSerializer(serializers.ModelSerializer):
             "id", "quantity_ml", 
             "india_price", "india_discount_price", "india_stock",
             "switzerland_price", "switzerland_discount_price", "switzerland_stock",
+            "oversell",
         ]
